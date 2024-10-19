@@ -1,11 +1,12 @@
 import {z} from 'zod';
 export const CreateStreamSchema = z.object({
-    ownerId: z.string(),
-    url:z.string().includes('youtube.com').or(z.string().includes('spotify.com')),
+    userName: z.string(),
+    videoId: z.string(),
+    url:z.string().regex(/^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube(?:-nocookie)?\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|live\/|v\/)?)([\w\-]+)(\S+)?$/),
 })
 
 export const VoteSchema = z.object({
     streamId: z.string(),
     userId: z.string(),
-    vote: z.number().min(-1).max(1),    
+    vote: z.boolean().default(false),    
 })

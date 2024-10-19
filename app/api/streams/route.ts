@@ -5,30 +5,49 @@ import { getServerSession } from "next-auth";
 import { options } from "@/app/config/auth";
 // @ts-ignore
 import youtubesearchapi from "youtube-search-api"
-const YT_REGEX= /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube(?:-nocookie)?\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|live\/|v\/)?)([\w\-]+)(\S+)?$/
+
+// create stream api
 export async function POST(req:NextRequest){
+    const session= await getServerSession(options);
+    if(!session?.user){
+        return new NextResponse(JSON.stringify({error:"Unauthorized"}),{
+            status:401,
+            headers:{
+                "Content-Type":"application/json",
+            },
+        });
+    }
     try{
         const data= CreateStreamSchema.parse(await req.json());
-         if(!data.url.match(YT_REGEX)){
-            return new NextResponse(JSON.stringify({'messsage':'Invalid YouTube URL'}));
-         }
-         const videoId= data.url.split("?v=")[1];
-         const videoDetails=await youtubesearchapi.GetVideoDetails(videoId);
-        //  console.log(data.url);
-         console.log(videoDetails.thumbnail.thumbnails[1]);
+        if(!data){
+            return new NextResponse(JSON.stringify({error:"Invalid data"}),{
+                status:400,
+                headers:{
+                    "Content-Type":"application/json",
+                },
+            });
+        }
+        const videoDetails=await youtubesearchapi.GetVideoDetails(data.videoId);
+        const username=session?.user?.username;
          const res= await prisma.stream.create({
             data:{
                 type:"youtube",
-                userId:data.ownerId,
+                userName:data.userName||"",
                 url:data.url,
                 title:videoDetails.title,
-                videoId,
+                videoId:data.videoId,
+                addedBy:username||"",
                 thumbnail:videoDetails.thumbnail.thumbnails[1].url,
-                
             }
         });
-        return new NextResponse(JSON.stringify(res));
+        // console.log(res);
+        return new NextResponse(JSON.stringify(
+            {
+                message:"Stream created",
+            }
+        ));
     }catch(err){
+        console.log(err);
         return new NextResponse(JSON.stringify({error:err}),{
             status:400,
             headers:{
@@ -38,20 +57,10 @@ export async function POST(req:NextRequest){
     }
 
 }
-
-export async function GET(req:NextRequest){
-    const ownerId= req.nextUrl.searchParams.get("roomId");
-    if(!ownerId){
-        return new NextResponse(JSON.stringify({error:"no room id"}),{
-            status:400,
-            headers:{
-                "Content-Type":"application/json",
-            },
-        });
-    }
+export async function DELETE(req:NextRequest){
     const session=await getServerSession(options);
-    if(!session?.user?.email){
-        return new NextResponse(JSON.stringify({error:"unauthorized"}),{
+    if(!session?.user){
+        return new NextResponse(JSON.stringify({error:"Unauthorized"}),{
             status:401,
             headers:{
                 "Content-Type":"application/json",
@@ -59,22 +68,68 @@ export async function GET(req:NextRequest){
         });
     }
     try{
-        const user= await prisma.user.findUnique({
+        const data=await req.json();
+        const streamId=data.id;
+        const stream=await prisma.stream.findFirst({
             where:{
-                email:session.user.email,
+                id:streamId,
+                userName:session.user.username||"",
             }
-        })
+        });
+        if(!stream){
+            return new NextResponse(JSON.stringify({error:"Stream not found"}),{
+                status:404,
+                headers:{
+                    "Content-Type":"application/json",
+                },
+            });
+        }
+        await prisma.stream.delete({
+            where:{
+                id:stream.id,
+
+            }
+        });
+        return new NextResponse(JSON.stringify({message:"Stream deleted"}),{
+            status:200,
+            headers:{
+                "Content-Type":"application/json",
+            },
+        });
+    }catch(err){
+        console.log(err);
+        return new NextResponse(JSON.stringify({error:err}),{
+            status:400,
+            headers:{
+                "Content-Type":"application/json",
+            },
+        });
+    }
+}
+export async function GET(req:NextRequest){
+    const ownerName= req.nextUrl.searchParams.get("userName");
+    if(!ownerName){
+        return new NextResponse(JSON.stringify({error:"provide a username"}),{
+            status:400,
+            headers:{
+                "Content-Type":"application/json",
+            },
+        });
+    }
+    try{
         const streams=await prisma.stream.findMany({
             orderBy:{
-                createdAt:"desc",
+                votesCount:"desc",
             },
             where:{
-                userId:ownerId,
-                votes:{
-                    some:{
-                        userId:user?.id,
-                    }
-                }
+                userName:ownerName
+            },
+            select:{
+                id:true,
+                videoId:true,
+                thumbnail:true,
+                title:true,
+                votesCount:true,
             }
         });
         return new NextResponse(JSON.stringify(streams),{
@@ -84,6 +139,7 @@ export async function GET(req:NextRequest){
             },
         });
     }catch(err){
+        console.log(err);   
         return new NextResponse(JSON.stringify({error:err}),{
             status:400,
             headers:{

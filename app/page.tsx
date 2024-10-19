@@ -1,4 +1,3 @@
-"use client"
 import { signIn } from "next-auth/react";
 import Appbar from "./components/appbar";
 import { Button } from "@/components/ui/button"
@@ -20,12 +19,7 @@ export default function Home() {
           <Link className="text-sm font-medium hover:underline underline-offset-4 text-white" href="#">
             Features
           </Link>
-          <Link className="text-sm font-medium hover:underline underline-offset-4 text-white" href="#">
-            Pricing
-          </Link>
-          <Link className="text-sm font-medium hover:underline underline-offset-4 text-white" href="#">
-            About
-          </Link>
+          
           <Link className="text-sm font-medium hover:underline underline-offset-4 text-white" href="#">
             Contact
           </Link>
@@ -35,7 +29,7 @@ export default function Home() {
         </nav>
       </header>
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-black text-white">
+        <section className="w-full min-h-screen py-12 md:py-24 lg:py-32 xl:py-48 bg-black text-white">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center space-y-4 text-center">
               <div className="space-y-2">
@@ -47,9 +41,9 @@ export default function Home() {
                   together in a unique, interactive experience that's pure elegance.
                 </p>
               </div>
-              <div className="space-x-4">
-                <Button  variant={"outline"} className= "border-white hover:text-black bg-white/10 text-white ">Start Streaming</Button>
-                <Button variant="outline" className="border-white hover:text-black bg-white/10 text-white ">Join a Stream</Button>
+              <div className="space-x-4 pt-auto">
+                <Button  variant={"outline"} className= "border-white hover:text-black bg-white/10 text-white "><a href="/dashboard">Start Streaming</a></Button>
+                <Button variant="outline" className="border-white hover:text-black bg-white/10 text-white "><a href="/dashboard">Join a stream</a></Button>
               </div>
             </div>
           </div>

@@ -22,14 +22,14 @@ export const POST = async (req: NextRequest) => {
                 streamId:data.streamId,
             }
         }); 
-        if(check && data.vote>0){
+        if(check && data.vote){
             return  new Response(JSON.stringify({error:"already voted"}),{
                 status:400,
                 headers:{
                     "Content-Type":"application/json",
                 },
             });
-        }else if(!check && data.vote<0){
+        }else if(!check && !data.vote){
             return  new Response(JSON.stringify({error:"no vote to remove"}),{
                 status:400,
                 headers:{
@@ -37,12 +37,32 @@ export const POST = async (req: NextRequest) => {
                 },
             });
         }
-        if(data.vote>0){
+        if(data.vote){
             await prisma.votes.create({
                 data:{
                     userId:data.userId,
                     streamId:data.streamId,
                 }
+            });
+            const stream=await prisma.stream.update({
+                where:{
+                    id:data.streamId,
+                },
+                data:{
+                    votesCount:{
+                        increment:1,
+                    }
+                },
+                select:{
+                    votesCount:true,
+                    videoId:true,
+                }
+            });
+            return new Response(JSON.stringify(stream),{
+                status:200,
+                headers:{
+                    "Content-Type":"application/json",
+                },
             });
         }else{
             await prisma.votes.delete({
@@ -50,20 +70,27 @@ export const POST = async (req: NextRequest) => {
                     id:check?.id,
                 }
             });
+           const stream= await prisma.stream.update({
+                where:{
+                    id:data.streamId,
+                },
+                data:{
+                    votesCount:{
+                        decrement:1,
+                    }
+                },
+                select:{
+                    votesCount:true,
+                    videoId:true,
+                }
+            });
+            return new Response(JSON.stringify(stream),{
+                status:200,
+                headers:{
+                    "Content-Type":"application/json",
+                },
+            });
         }
-        const votes=await prisma.votes.findMany({
-            where:{
-                streamId:data.streamId,
-            }
-        });
-        const total=votes.reduce((acc,curr)=>acc+1,0);
-        console.log("total votes",total);
-        return new Response(JSON.stringify({total}),{
-            status:200,
-            headers:{
-                "Content-Type":"application/json",
-            },
-        });
         
     }catch(err){
         return new Response(JSON.stringify({error:err}),{

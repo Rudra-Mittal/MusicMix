@@ -8,35 +8,39 @@ datasource db {
 }
 
 model User{
-  id String  @id @default(uuid())
-  username String 
-  email String @unique
-  name String
-  provider Provider
-  stream Stream[]
+  id            String    @id @default(uuid())
+  username      String    @unique
+  email         String    @unique
+  name          String
+  provider      Provider
+  streams       Stream[]  @relation("StreamUser")
+  addedStreams  Stream[]  @relation("AddedByUser")
   votes votes[]
+
 } 
 model Stream{
-  id String @id @default(uuid())
-  type StreamType
-  url String 
-  videoId String
-  title String
-  thumbnail String 
-  createdAt DateTime @default(now())
-  active Boolean @default(false)
-  votes votes[] 
-  userId  String 
-
-  user   User  @relation(fields:[userId],references: [id]) 
+  id          String      @id @default(uuid())
+  type        StreamType
+  url         String      
+  videoId     String      
+  title       String
+  thumbnail   String 
+  createdAt   DateTime    @default(now())
+  active      Boolean     @default(true)
+  votes       votes[] 
+  votesCount  Int         @default(0)
+  userName    String 
+  addedBy     String
+  addedByid   User        @relation(fields:[addedBy],references: [username],name:"AddedByUser")
+  user        User        @relation(fields:[userName],references: [username],name:"StreamUser") 
+  @@unique([videoId,userName])
 }
-
 model votes{
-  id String @id @default(uuid())
-  userId String
-  streamId String
-  user User @relation(fields:[userId],references: [id])
-  stream Stream @relation(fields:[streamId],references: [id])
+  id        String    @id @default(uuid())
+  userId    String
+  streamId  String
+  user      User      @relation(fields:[userId],references: [id])
+  stream    Stream    @relation(fields:[streamId],references: [id])
   @@unique([userId,streamId])
 }
 
