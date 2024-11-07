@@ -11,36 +11,57 @@ import { useSession } from "next-auth/react"
 import { date, set } from "zod"
 import { useRouter } from "next/navigation"
 import { CreateStreamSchema } from "../utils/types"
+import YouTubeAudioPlayer from "../play/page"
 interface QueueItem {
   id:string
   videoId: string
   title: string
   thumbnail: string
-  votes: number
+  votesCount: number
 }
-
 
 function getStreams(username:string,setQueue:React.Dispatch<React.SetStateAction<QueueItem[]>>){
           axios.get("/api/streams?userName="+username)
             .then((res)=>{
-              setQueue(res.data.sort((a:QueueItem, b:QueueItem) => b.votes - a.votes))
+              setQueue(res.data.sort((a:QueueItem, b:QueueItem) => b.votesCount - a.votesCount))
             }).catch((err)=>{
               return err;
 })
 }
+function SetCurrentStream(videoId:string,setCurrentVideo:React.Dispatch<React.SetStateAction<QueueItem|undefined>>){
+  axios.post("/api/streams/active",{videoId:videoId||""}).then((res)=>{
+    console.log(res.data);
+    setCurrentVideo(res.data);
+  }).catch((err)=>{
+    console.log(err);
+    setCurrentVideo(undefined);
+  })
+}
+function getCurrentVideo(username:string,setCurrentVideo:React.Dispatch<React.SetStateAction<QueueItem|undefined>>){
+  axios.get("/api/streams/active?userName="+username)
+  .then((res)=>{
+    if(res.data){
+      setCurrentVideo(res.data)
+    }
+  }).catch((err)=>{
+    return err;
+  })
+}
 export default  function OwnerStreamControl() {
   const session =  useSession();
   const router = useRouter();
-  const [currentVideo, setCurrentVideo] = useState<string>("")
+  const [currentVideo, setCurrentVideo] = useState<QueueItem>()
   const [newVideoUrl, setNewVideoUrl] = useState("")
   const [queue, setQueue] = useState<QueueItem[]>([])
   useEffect(()=>{
     if(session?.status!=="loading"){
       if (session?.data?.user) {
+        getCurrentVideo(session.data.user.username||"",setCurrentVideo);
+        getStreams(session.data.user.username||"",setQueue);
         setInterval(()=>{
           if(session?.data?.user){
             getStreams(session.data.user.username||"",setQueue);
-          }
+          } 
         },10000)
       }
     }
@@ -49,7 +70,7 @@ export default  function OwnerStreamControl() {
 
   const addToQueue = () => {
     try{
-      const data=CreateStreamSchema.parse({userName:session.data?.user.username,videoId:newVideoUrl.split("?v=")[1],url:newVideoUrl});
+      const data=CreateStreamSchema.parse({userName:session.data?.user.username,videoId:newVideoUrl.split("?v=")[1]?.split("&")[0],url:newVideoUrl});
     if (data) {
       axios.post("/api/streams",data).then((res)=>{
         getStreams(session.data?.user.username||"",setQueue);
@@ -79,11 +100,15 @@ export default  function OwnerStreamControl() {
   }
 
   const playNextSong = () => {
-    console.log(queue[0]);  
+    // console.log(queue[0]);  
     if (queue.length > 0) {
       const nextSong = queue[0]
-      setCurrentVideo(()=>nextSong.videoId)
-      deleteFromQueue(nextSong.id)
+      if(currentVideo)deleteFromQueue(currentVideo.id);
+      SetCurrentStream(nextSong.videoId,setCurrentVideo);
+      getStreams(session.data?.user.username||"",setQueue);
+    }else{
+      if(currentVideo)deleteFromQueue(currentVideo.id);
+      setCurrentVideo(undefined);
     }
   }
   if(session?.status==="loading"){
@@ -94,6 +119,7 @@ export default  function OwnerStreamControl() {
     },2000)
     return <div>You must be logged in,Redirecting to home page ...</div>  
   }
+  
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">{session?.data?.user?.username} Stream Control</h1>
@@ -103,16 +129,7 @@ export default  function OwnerStreamControl() {
           <h2 className="text-xl font-semibold mb-4">Now Playing</h2>
           <Card className="p-4">
             <div className="aspect-video mb-4">
-              <iframe
-                ref={playerRef}
-                width="100%"
-                height="100%"
-                src={`https://www.youtube.com/embed/${currentVideo}?autoplay=1`}
-                title="YouTube video player"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
+            {(currentVideo)?  <YouTubeAudioPlayer videoId ={currentVideo?.videoId} thumbnailUrl={currentVideo?.thumbnail} />:<div>No video found</div>}
             </div>
             <div className="flex justify-end">
               <Button onClick={playNextSong} variant="outline" size="sm">
@@ -151,7 +168,7 @@ export default  function OwnerStreamControl() {
                     />
                     <div className="flex-grow">
                       <h3 className="font-semibold">{item.title}</h3>
-                      <p className="text-sm text-gray-500">{item.votes} votes</p>
+                      <p className="text-sm text-gray-500">{item.votesCount} votes</p>
                       {index < 3 && (
                         <span className="inline-block bg-primary text-primary-foreground text-xs px-2 py-1 rounded mt-1">
                           Top {index + 1}

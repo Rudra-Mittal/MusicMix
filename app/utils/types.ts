@@ -7,6 +7,5 @@ export const CreateStreamSchema = z.object({
 
 export const VoteSchema = z.object({
     streamId: z.string(),
-    userId: z.string(),
     vote: z.boolean().default(false),    
 })

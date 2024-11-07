@@ -15,10 +15,23 @@ export const POST = async (req: NextRequest) => {
     }
     try{
         const data = VoteSchema.parse(await req.json());
-        // console.log(data);
+        console.log(data);
+        const user=await prisma.user.findFirst({
+            where:{
+                email:session.user.email,
+            }
+        });
+        if(!user){
+            return new Response(JSON.stringify({error:"user not found"}),{
+                status:404,
+                headers:{
+                    "Content-Type":"application/json",
+                },
+            });
+        }
         const check=await prisma.votes.findFirst({
             where:{
-                userId:data.userId,
+                userId:user?.id,
                 streamId:data.streamId,
             }
         }); 
@@ -38,9 +51,10 @@ export const POST = async (req: NextRequest) => {
             });
         }
         if(data.vote){
+            console.log("voting");
             await prisma.votes.create({
                 data:{
-                    userId:data.userId,
+                    userId:user.id,
                     streamId:data.streamId,
                 }
             });
@@ -54,8 +68,7 @@ export const POST = async (req: NextRequest) => {
                     }
                 },
                 select:{
-                    votesCount:true,
-                    videoId:true,
+                    id:true,
                 }
             });
             return new Response(JSON.stringify(stream),{
@@ -80,8 +93,7 @@ export const POST = async (req: NextRequest) => {
                     }
                 },
                 select:{
-                    votesCount:true,
-                    videoId:true,
+                    id:true,
                 }
             });
             return new Response(JSON.stringify(stream),{

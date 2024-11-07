@@ -18,6 +18,7 @@ export async function POST(req:NextRequest){
         });
     }
     try{
+        // console.log(await req.json());
         const data= CreateStreamSchema.parse(await req.json());
         if(!data){
             return new NextResponse(JSON.stringify({error:"Invalid data"}),{
@@ -87,7 +88,7 @@ export async function DELETE(req:NextRequest){
         await prisma.stream.delete({
             where:{
                 id:stream.id,
-
+                
             }
         });
         return new NextResponse(JSON.stringify({message:"Stream deleted"}),{
@@ -117,12 +118,19 @@ export async function GET(req:NextRequest){
         });
     }
     try{
+        const session=await getServerSession(options);
+        const user=await prisma.user.findFirst({
+            where:{
+                email:session?.user?.email||"",
+            }
+        });
         const streams=await prisma.stream.findMany({
             orderBy:{
                 votesCount:"desc",
             },
             where:{
-                userName:ownerName
+                userName:ownerName,
+                active:false,
             },
             select:{
                 id:true,
@@ -130,6 +138,14 @@ export async function GET(req:NextRequest){
                 thumbnail:true,
                 title:true,
                 votesCount:true,
+                votes:{
+                    where:{
+                        userId:user?.id||"",
+                    },
+                    select:{
+                        userId:true,
+                    }
+                }
             }
         });
         return new NextResponse(JSON.stringify(streams),{

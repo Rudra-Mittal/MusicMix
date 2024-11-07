@@ -26,8 +26,8 @@ model Stream{
   title       String
   thumbnail   String 
   createdAt   DateTime    @default(now())
-  active      Boolean     @default(true)
-  votes       votes[] 
+  active      Boolean     @default(false)
+  votes       votes[]     @relation("StreamVotes") 
   votesCount  Int         @default(0)
   userName    String 
   addedBy     String
@@ -40,7 +40,7 @@ model votes{
   userId    String
   streamId  String
   user      User      @relation(fields:[userId],references: [id])
-  stream    Stream    @relation(fields:[streamId],references: [id])
+  stream    Stream    @relation("StreamVotes",fields:[streamId],references: [id], onDelete: Cascade)
   @@unique([userId,streamId])
 }
 
