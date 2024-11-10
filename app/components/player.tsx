@@ -15,7 +15,6 @@ export default function YouTubeAudioPlayer({ videoId, thumbnailUrl }: YouTubePla
   const [duration, setDuration] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
   const playerRef = useRef<YouTube>(null)
-  console.log(videoId)
   useEffect(() => {
     const interval = setInterval(() => {
       if (isPlaying && playerRef.current?.internalPlayer) {

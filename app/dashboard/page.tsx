@@ -11,7 +11,7 @@ import { useSession } from "next-auth/react"
 import { date, set } from "zod"
 import { useRouter } from "next/navigation"
 import { CreateStreamSchema } from "../utils/types"
-import YouTubeAudioPlayer from "../play/page"
+import YouTubeAudioPlayer from "@/app/components/player"
 interface QueueItem {
   id:string
   videoId: string

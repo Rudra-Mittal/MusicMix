@@ -43,7 +43,7 @@ export default function Home() {
               </div>
               <div className="space-x-4 pt-auto">
                 <Button  variant={"outline"} className= "border-white hover:text-black bg-white/10 text-white "><a href="/dashboard">Start Streaming</a></Button>
-                <Button variant="outline" className="border-white hover:text-black bg-white/10 text-white "><a href="/dashboard">Join a stream</a></Button>
+                <Button variant="outline" className="border-white hover:text-black bg-white/10 text-white "><a href="/join">Join a stream</a></Button>
               </div>
             </div>
           </div>

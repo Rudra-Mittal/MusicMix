@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { ThumbsUp, Plus, Divide } from "lucide-react"
 import axios from "axios"
 import YouTube from "react-youtube"
-import YouTubeAudioPlayer from "@/app/play/page"
+import YouTubeAudioPlayer from "@/app/components/player"
 interface QueueItem {
   id: string
   videoId: string
