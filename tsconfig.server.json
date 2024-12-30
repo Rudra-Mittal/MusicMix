@@ -1,0 +1,15 @@
+{
+    "extends":"./tsconfig.json",
+    "compilerOptions": {
+        "outDir": "./dist-server",
+        "module": "commonJS",
+        "target":"es2019",
+        "lib": ["es2019"],
+        "types": ["node"],
+        "isolatedModules": false,
+        "noemit":false,
+        "forceConsistentCasingInFileNames": true
+    },
+    "allowImportingTsExtensions": true,
+    "include":["server.ts"]
+}

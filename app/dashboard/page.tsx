@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,10 +7,11 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Plus, SkipForward, Trash2 } from "lucide-react"
 import axios from "axios"
 import { useSession } from "next-auth/react"
-import { date, set } from "zod"
 import { useRouter } from "next/navigation"
 import { CreateStreamSchema } from "../utils/types"
 import YouTubeAudioPlayer from "@/app/components/player"
+import { socket } from "../socket"
+import { io } from "socket.io-client"
 interface QueueItem {
   id:string
   videoId: string
@@ -25,7 +25,7 @@ function getStreams(username:string,setQueue:React.Dispatch<React.SetStateAction
             .then((res)=>{
               setQueue(res.data.sort((a:QueueItem, b:QueueItem) => b.votesCount - a.votesCount))
             }).catch((err)=>{
-              return err;
+            return err;
 })
 }
 function SetCurrentStream(videoId:string,setCurrentVideo:React.Dispatch<React.SetStateAction<QueueItem|undefined>>){
@@ -56,13 +56,18 @@ export default  function OwnerStreamControl() {
   useEffect(()=>{
     if(session?.status!=="loading"){
       if (session?.data?.user) {
+        
         getCurrentVideo(session.data.user.username||"",setCurrentVideo);
         getStreams(session.data.user.username||"",setQueue);
-        setInterval(()=>{
-          if(session?.data?.user){
-            getStreams(session.data.user.username||"",setQueue);
-          } 
-        },10000)
+        // setInterval(()=>{
+        //   if(session?.data?.user){
+        //     getStreams(session.data.user.username||"",setQueue);
+        //   } 
+        // },10000)
+        socket.on("connect",()=>{
+          console.log("connected")
+          // socket.emit("connection",{data:"connected"});
+        })
       }
     }
   },[session])
@@ -189,6 +194,9 @@ export default  function OwnerStreamControl() {
           </ScrollArea>
         </div>
       </div>
+      <button onClick={()=>{
+        socket.emit("help",{data:"help"});
+      }} >click me hellp hellpo</button>
     </div>
   )
 }

@@ -1,6 +1,7 @@
+"use client"
 import { signIn } from "next-auth/react";
 import Appbar from "./components/appbar";
-import { Button } from "@/components/ui/button"
+import { Button,ButtonUi } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import { Music, Play, Vote, Users } from "lucide-react"
@@ -42,6 +43,7 @@ export default function Home() {
                 </p>
               </div>
               <div className="space-x-4 pt-auto">
+             
                 <Button  variant={"outline"} className= "border-white hover:text-black bg-white/10 text-white "><a href="/dashboard">Start Streaming</a></Button>
                 <Button variant="outline" className="border-white hover:text-black bg-white/10 text-white "><a href="/join">Join a stream</a></Button>
               </div>
@@ -101,6 +103,7 @@ export default function Home() {
                   <Slider defaultValue={[25]} max={100} step={1} className="w-64" />
                 </div>
               </div>
+              {/* <ButtonUi></ButtonUi> */}
               <Button className="w-full mt-6 bg-black text-white hover:bg-gray-800">Cast Your Vote</Button>
             </div>
           </div>
