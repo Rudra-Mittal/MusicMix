@@ -1,15 +1,13 @@
 {
-    "extends":"./tsconfig.json",
     "compilerOptions": {
-        "outDir": "./dist-server",
-        "module": "commonJS",
-        "target":"es2019",
-        "lib": ["es2019"],
-        "types": ["node"],
-        "isolatedModules": false,
-        "noemit":false,
-        "forceConsistentCasingInFileNames": true
+      "target": "es5",
+      "module": "commonjs",
+      "strict": true,
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true,
+      "outDir": "./dist"
     },
-    "allowImportingTsExtensions": true,
-    "include":["server.ts"]
-}
+    "include": ["**/*.ts"],
+    "exclude": ["node_modules"]
+  }
