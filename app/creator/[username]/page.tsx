@@ -9,15 +9,15 @@ import { ThumbsUp, Plus, Divide } from "lucide-react"
 import axios from "axios"
 import YouTube from "react-youtube"
 import YouTubeAudioPlayer from "@/app/components/player"
+import { socket } from "../../socket"
+import { count } from "console"
 interface QueueItem {
   id: string
   videoId: string
   title: string
   thumbnail: string
   votesCount: number
-  votes:{
-    userId:string
-  }[]
+  vote:boolean
 }
 function getStreams(username:string,setQueue:React.Dispatch<React.SetStateAction<QueueItem[]>>){
   axios.get("/api/streams?userName="+username)
@@ -44,41 +44,53 @@ export default function CreatorDashboard({params}: {params: {username: string}})
   const [newVideoUrl, setNewVideoUrl] = useState("")
   const username = decodeURIComponent(params.username);
   const [queue, setQueue] = useState<QueueItem[]>([]);
-  const userLike= useState<boolean[]>([]);
+  const userLike= useState<boolean[]>([]);  
   useEffect(()=>{
-    getStreams(username,setQueue);
-    getCurrentVideo(username,setCurrentVideo);
-    setInterval(()=>{
-      getStreams(username,setQueue);
-      getCurrentVideo(username,setCurrentVideo);
-    },10000)
+    
+    socket.on("error",(data)=>{
+      console.log(data);
+    })
+    socket.on("voteUpdate", (data) => {
+      // console.log(queue);
+      console.log(data);
+      setQueue((prevqueue)=>[...prevqueue.map((item)=>(item.videoId==data.videoId)?{...item,votesCount:data.votesCount,vote:data.voteByUser}:item)].sort((a:QueueItem, b:QueueItem) => b.votesCount - a.votesCount));
+      });
+
+    socket.emit("joinRoom",username);
+    socket.emit("getActiveStream",username);
+    socket.on("connect",()=>{
+      console.log("Connected to socket");
+    })
+    socket.once("initialStreams",(data:QueueItem[])=>{
+      console.log(data)
+      setQueue([...data].sort((a:QueueItem, b:QueueItem) => b.votesCount - a.votesCount));
+    })
+    socket.on("deleteStream",(data:QueueItem)=>{
+      setQueue((prevQueue) => [...prevQueue.filter((item)=>item.videoId!=data.videoId)]);
+    })
+    socket.on("activeStream",(data:QueueItem)=>{
+      if(data.videoId==""){
+        setCurrentVideo(undefined);
+      }else setCurrentVideo(data);
+    })
+    socket.on("newStream",(data:QueueItem)=>{
+      console.log(queue);
+      console.log(data)
+      setQueue((prevQueue) => [...prevQueue, data]);
+    })
   },[username])
   const addToQueue = () => {
     const videoId = newVideoUrl.split("v=")[1]
     if (videoId) {
-      axios.post("/api/streams",{userName:username,videoId,url:newVideoUrl}).then((res)=>{
-        // console.log(res);
-        getStreams(username,setQueue);
-        getCurrentVideo(username,setCurrentVideo);
-      }).catch((err)=>{
-        console.log(err);
-      })
-      setNewVideoUrl("")
+      socket.emit("createStream",{userName:username,videoId:videoId,url:newVideoUrl});
     }else{
       alert("Invalid  Youtube URL")
     }
   }
-  
-  const voteForSong = (id: string,) => {
-      const vote = queue.find((item) => item.id === id);
-      console.log(queue)
-      axios.post("/api/streams/votes",{streamId:id,vote:!(vote?.votes?.length)}).then((res)=>{
-        getStreams(username,setQueue);
-        getCurrentVideo(username,setCurrentVideo);
-      } ).catch((err)=>{
-        console.log(err);
-      }
-    )}
+   const handleVote = (id: string,vote:boolean) => {
+    console.log("Voting for",id,vote);
+    socket.emit("voteStream",{owner:username, videoId:id,count:vote});
+  }
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">{username}  Stream</h1>
@@ -124,9 +136,9 @@ export default function CreatorDashboard({params}: {params: {username: string}})
                       )}
                     </div>
                     <Button 
-                      variant={(!item.votes.length)?"outline":"destructive"} 
+                      variant={(!item.vote)?"outline":"destructive"} 
                       size="sm" 
-                      onClick={() => voteForSong(item.id)}
+                      onClick={() =>handleVote(item.videoId,!item.vote) }
                     >
                       <ThumbsUp className="mr-2 h-4 w-4" />
                       Vote

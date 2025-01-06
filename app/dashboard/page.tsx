@@ -4,14 +4,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Plus, SkipForward, Trash2 } from "lucide-react"
+import { Plus, SkipForward, SortDesc, Trash2 } from "lucide-react"
 import axios from "axios"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { CreateStreamSchema } from "../utils/types"
 import YouTubeAudioPlayer from "@/app/components/player"
 import { socket } from "../socket"
-import { io } from "socket.io-client"
 interface QueueItem {
   id:string
   videoId: string
@@ -48,86 +47,107 @@ function getCurrentVideo(username:string,setCurrentVideo:React.Dispatch<React.Se
   })
 }
 export default  function OwnerStreamControl() {
-  const session =  useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
-  const [currentVideo, setCurrentVideo] = useState<QueueItem>()
-  const [newVideoUrl, setNewVideoUrl] = useState("")
-  const [queue, setQueue] = useState<QueueItem[]>([])
-  useEffect(()=>{
-    if(session?.status!=="loading"){
-      if (session?.data?.user) {
-        
-        getCurrentVideo(session.data.user.username||"",setCurrentVideo);
-        getStreams(session.data.user.username||"",setQueue);
-        // setInterval(()=>{
-        //   if(session?.data?.user){
-        //     getStreams(session.data.user.username||"",setQueue);
-        //   } 
-        // },10000)
-        socket.on("connect",()=>{
-          console.log("connected")
-          // socket.emit("connection",{data:"connected"});
-        })
-      }
+  const [currentVideo, setCurrentVideo] = useState<QueueItem | undefined>(undefined);
+  const [newVideoUrl, setNewVideoUrl] = useState("");
+  const [queue, setQueue] = useState<QueueItem[]>([]);
+  const socketInitialized = useRef(false);
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      setTimeout(() => {
+        router.push("/");
+      }, 2000);
+    } else if (session?.user && !socketInitialized.current) {
+      console.log("rerender");
+      setCurrentVideo(undefined);
+      setNewVideoUrl("");
+      setQueue([]);
+
+      const handleNewStream = (data: any) => {
+        console.log(data);
+        setQueue((prevQueue) => [...prevQueue, data]);
+      };
+
+      const handleInitialStreams = (data: any) => {
+        console.log(data);
+        setQueue([...data].sort((a:QueueItem, b:QueueItem) => b.votesCount - a.votesCount));
+      };
+      socket.on("error",(data)=>{
+        console.log(data);
+      })
+      socket.on("deleteStream",(data:QueueItem)=>{
+        setQueue((prevQueue) => [...prevQueue.filter((item)=>item.videoId!=data.videoId)]);
+      })
+      socket.on("voteUpdate", (data) => {
+        console.log(queue);
+        console.log(data);
+        setQueue((prevqueue)=>[...prevqueue.map((item)=>(item.videoId==data.videoId)?{...item,votesCount:data.votesCount}:item)].sort((a:QueueItem, b:QueueItem) => b.votesCount - a.votesCount));
+        });
+      socket.on("newStream", handleNewStream);
+      socket.emit("joinRoom", session.user.username || "");
+      socket.once("initialStreams", handleInitialStreams);
+      socket.emit("getActiveStream",session.user.username);
+      socket.on("activeStream",(data:QueueItem)=>{
+        console.log(data);
+        setCurrentVideo(data);
+      })
+      socket.on("connect", () => {
+        console.log("connected");
+      });
+
+      socketInitialized.current = true;
+
+      return () => {
+        socket.off("initialStreams", handleInitialStreams);
+        socket.off("connect");
+      };
     }
-  },[session])
-  const playerRef = useRef<HTMLIFrameElement>(null)
+  }, [status, session, router]);
+
+  const playerRef = useRef<HTMLIFrameElement>(null);
 
   const addToQueue = () => {
-    try{
-      const data=CreateStreamSchema.parse({userName:session.data?.user.username,videoId:newVideoUrl.split("?v=")[1]?.split("&")[0],url:newVideoUrl});
-    if (data) {
-      axios.post("/api/streams",data).then((res)=>{
-        getStreams(session.data?.user.username||"",setQueue);
-      }).catch((err)=>{
-        console.log(err);
-      })
-      setNewVideoUrl("")
-    }else{
-      console.log("eooror");
-      alert(data);
+    try {
+      const data = CreateStreamSchema.parse({
+        userName: session?.user.username,
+        videoId: newVideoUrl.split("?v=")[1]?.split("&")[0],
+        url: newVideoUrl,
+      });
+      if (data) {
+        socket.emit("createStream", data);
+        setNewVideoUrl("");
+      } else {
+        console.log("error");
+        alert(data);
+      }
+    } catch (err) {
+      console.log(err);
     }
-  }catch(err){
-    console.log(err);
-  }
-  }
+  };
 
   const deleteFromQueue = (id: string) => {
-    axios.delete("/api/streams/",{
-      data:{
-        id
-      }
-    }).then((res)=>{
-      getStreams(session.data?.user.username||"",setQueue);
-    }).catch((err)=>{
-      console.log(err);
-    })
-  }
+    socket.emit("deleteStream", { videoId: id });
+    return ;
+  };
 
   const playNextSong = () => {
-    // console.log(queue[0]);  
-    if (queue.length > 0) {
-      const nextSong = queue[0]
-      if(currentVideo)deleteFromQueue(currentVideo.id);
-      SetCurrentStream(nextSong.videoId,setCurrentVideo);
-      getStreams(session.data?.user.username||"",setQueue);
-    }else{
-      if(currentVideo)deleteFromQueue(currentVideo.id);
-      setCurrentVideo(undefined);
+    if(currentVideo){
+      socket.emit("deleteStream", { videoId: currentVideo.videoId });
     }
-  }
-  if(session?.status==="loading"){
-    return <div>Loading...</div>
-  }else if(session.status==="unauthenticated"){
-    setTimeout(()=>{
-      router.push("/");
-    },2000)
-    return <div>You must be logged in,Redirecting to home page ...</div>  
-  }
-  
+    if (queue.length > 0) {
+      const nextSong = queue[0];
+      //  order is important as we need to set the active stream first
+      socket.emit("activeStream", { videoId: nextSong.videoId });
+      socket.emit("deleteStream", { videoId: nextSong.videoId });
+    } else {
+      socket.emit("activeStream", { videoId: "null" });
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">{session?.data?.user?.username} Stream Control</h1>
+      <h1 className="text-2xl font-bold mb-6">{session?.user?.username} Stream Control</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
@@ -183,7 +203,7 @@ export default  function OwnerStreamControl() {
                     <Button 
                       variant="destructive" 
                       size="sm" 
-                      onClick={() => deleteFromQueue(item.id)}
+                      onClick={() => deleteFromQueue(item.videoId)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
