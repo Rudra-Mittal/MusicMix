@@ -17,21 +17,11 @@ export default function JoinStream() {
     e.preventDefault()
     setIsJoining(true)
     await new Promise(resolve => setTimeout(resolve, 1000))
-    setIsJoining(false)
-    checkUser()
    if(!error) router.push(`/creator/${creatorId}`);
-    setError("Cannot Join Stream");
+   else setError("Cannot Join Stream");
   }
-  const checkUser= ()=>{
-    axios.get(`/api/streams/active?userName=${creatorId}`).then((res)=>{
-        setError("");
-    }).catch(async (err)=>{
-        setError(err.response.data.error);
-    })
-  }
-  useEffect(()=>{
-    checkUser();
-  },[creatorId])
+  
+  
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {

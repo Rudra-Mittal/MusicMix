@@ -22,7 +22,7 @@ export const options: NextAuthOptions = {
             clientSecret: process.env.GOOGLE_SECRET || "",
         })
     ],
-    secret: process.env.SECRET || "rfhyiugyf",
+    secret: process.env.NEXTAUTH_SECRET || "rfhyiugyf",
     callbacks: {
         async session({ session, token }) {
             if (token?.user) {

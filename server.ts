@@ -1,14 +1,13 @@
 import { createServer } from "http";
 import next from "next";
 import { Server } from "socket.io";
-import { createClient } from "redis";
-import cookie from "cookie";
+import  redisClient  from "./app/lib/redis";
 // @ts-ignore
 import youtubesearchapi from "youtube-search-api"
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
 import { randomUUID } from 'crypto';
-import { title } from "process";
+import { authentication } from "./app/middlewares/auth";
 const port = 3000;
 // when using middleware `hostname` and `port` must be provided below
 const app = next({ dev, hostname, port });
@@ -24,41 +23,20 @@ app.prepare().then(async () => {
     },
   });
 
-  const redisClient = createClient();
   redisClient.on("error", (err) => console.error("Redis Client Error", err));
   await redisClient.connect();
   const map = new Map<string, string>();
   const rooms = new Map<string, string[]>();
-  io.use(async (socket, next) => {
-    const cookies = cookie.parse(socket.handshake.headers.cookie || "");
-    const sessionToken = cookies["next-auth.session-token"];
-    // if (!sessionToken) {
-    //   console.log("No session token found");
-    //   return next(new Error("Authentication error"));
-    // }
-    try{
-      const response= await fetch(`http://${hostname}:${port}/api/session`,{
-        headers:{
-          cookie: `next-auth.session-token=${sessionToken}`
-        }
-      })
-      const session = await response.json();
-      socket.data.session=session;
-    }catch(err:any){
-      next(err);
-    }
-    next();
-  });
+  io.use(authentication);
   io.on("connection", async (socket) => {
     console.log("New connection");
+    console.log(socket.data?.session?.user?.username);
     map.set(socket.data?.session?.user?.username||socket.id,socket.id);
-    rooms.set(socket.id,[]);
-
     socket.on("createStream", async (data) => {
       // Strictly check the data
       const videoDetails = await youtubesearchapi.GetVideoDetails(data.videoId);
         const username = socket.data?.session?.user?.username || "";
-        const streamId = `stream:${username}:${data.videoId}`;
+        const streamId = `stream:${data.userName}:${data.videoId}`;
       
       const streamData = {
         id: randomUUID(),
@@ -73,7 +51,7 @@ app.prepare().then(async () => {
       };
     
       await redisClient.hSet(streamId, streamData);
-      await redisClient.zAdd(`streams:${username}`, { score: 0, value: streamId });
+      await redisClient.zAdd(`streams:${data.userName}`, { score: 0, value: streamId });
       const sendData={
         id:streamData.id,
         videoId:streamData.videoId,
@@ -81,15 +59,18 @@ app.prepare().then(async () => {
         thumbnail:streamData.thumbnail,
         votesCount:streamData.votes
       }
-      io.to(rooms.get(map.get(data.userName)||"") || []).emit("newStream", sendData);
+      // console.log("new stream",await(redisClient.zRange(`streams:${username}`,0,-1)));
+      io.to(rooms.get(data.userName||"") || []).emit("newStream", sendData);
     });
     
     socket.on("joinRoom",async (room)=>{
       const username = socket.data?.session?.user?.username || "";
       const ownerRoom=map.get(room);
       if(!ownerRoom)return;
-      console.log(ownerRoom);
-      if(!rooms.has(socket.id))  rooms.set(ownerRoom,[...rooms.get(ownerRoom)||[],socket.id]);
+      console.log("client socket",socket.id);
+      console.log("owner socket",ownerRoom);
+      rooms.set(room,[...rooms.get(room)||[],socket.id]);
+      console.log("rooms",rooms); 
       const streamIdx = await redisClient.zRange(`streams:${room}`, 0, -1);
       console.log(streamIdx);
       const streamData = await Promise.all(streamIdx.map(async (streamId) => {
@@ -142,27 +123,28 @@ app.prepare().then(async () => {
     
       const votes = await redisClient.hGet(streamId, "votes");
       io.to(socket.id).emit("voteUpdate", { videoId: data.videoId, votesCount: votes, voteByUser:data.count });
-      io.to(rooms.get(map.get(data.userName)||"") || []).except(socket.id).emit("voteUpdate", { videoId: data.videoId, votesCount: votes});
+      io.to(rooms.get(data.owner||"") || []).except(socket.id).emit("voteUpdate", { videoId: data.videoId, votesCount: votes});
     });
 
     socket.on("deleteStream", async (data) => {
       const username = socket.data?.session?.user?.username || "";
       const streamId = `stream:${username}:${data.videoId}`;
       const voteStream = `streamVotes:${username}:${data.videoId}`;
-      await redisClient.del(streamId);
       await redisClient.del(voteStream);
+      await redisClient.del(streamId);
       await redisClient.zRem(`streams:${username}`, streamId);
-      io.to(rooms.get(map.get(username)||"") || []).emit("deleteStream", { videoId: data.videoId });
+      io.to(rooms.get(username||"") || []).emit("deleteStream", { videoId: data.videoId });
     })
     socket.on("activeStream",async (data)=>{
       const username = socket.data?.session?.user?.username || "";
       const streamId = `stream:${username}:${(data.videoId)}`;
       if(data.videoId=="null"){
-        io.to(rooms.get(map.get(username)||"") || []).emit("activeStream", { id:"", videoId: "", title: "", thumbnail: "", votesCount: 0 });
+        await redisClient.del(`activeStream:${username}`);
+        io.to(rooms.get(username||"") || []).emit("activeStream", { id:"", videoId: "", title: "", thumbnail: "", votesCount: 0 });
         return;
       }
       const streamData = await redisClient.hGetAll(streamId);
-      // console.log("active stream",streamData);
+      // console.log("active stream",streamData,streamId);
       await redisClient.hSet(`activeStream:${username}`, {
         id: streamData.id,
         type: streamData.type,
@@ -178,7 +160,7 @@ app.prepare().then(async () => {
       // await redisClient.zRem(`streams:${username}`,streamId);
       // await redisClient.del(`streamVotes:${username}:${data.videoId}`);
       // console.log("active stream", await redisClient.get(`activeStream:${username}`));
-      io.to(rooms.get(map.get(username)||"") || []).emit("activeStream", { id:streamData.id, videoId: data.videoId, title: streamData.title, thumbnail: streamData.thumbnail, votesCount: streamData.votes });
+      io.to(rooms.get(username||"") || []).emit("activeStream", { id:streamData.id, videoId: data.videoId, title: streamData.title, thumbnail: streamData.thumbnail, votesCount: streamData.votes });
       return;
     })
     socket.on("getActiveStream",async (username)=>{
@@ -186,11 +168,15 @@ app.prepare().then(async () => {
       const streamData = await redisClient.hGetAll(`activeStream:${username}`);
       // console.log("active stream",streamData);
       if(streamData){
-        io.to(rooms.get(map.get(username)||"") || []).emit("activeStream", { id:streamData.id, videoId: streamData.videoId, title: streamData.title, thumbnail: streamData.thumbnail, votesCount: streamData.votes });
+        io.to(rooms.get(username||"") || []).emit("activeStream", { id:streamData.id, videoId: streamData.videoId, title: streamData.title, thumbnail: streamData.thumbnail, votesCount: streamData.votes });
       }
       return ;
     })
-
+    socket.on("disconnect", () => {
+      rooms.forEach((value,key)=>{
+        rooms.set(key,value.filter((item)=>item!=socket.id));
+      })
+    });
     
   });
 

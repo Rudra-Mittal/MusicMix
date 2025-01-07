@@ -1,5 +1,4 @@
-import Redis from 'ioredis';
-
-const redis = new Redis(process.env.REDIS_URL || '');
-
-export default redis;
+import { createClient } from "redis";
+const redisClient = createClient();
+redisClient.on("error", (err) => console.error("Redis Client Error", err));
+export default redisClient;

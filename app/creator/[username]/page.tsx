@@ -19,26 +19,7 @@ interface QueueItem {
   votesCount: number
   vote:boolean
 }
-function getStreams(username:string,setQueue:React.Dispatch<React.SetStateAction<QueueItem[]>>){
-  axios.get("/api/streams?userName="+username)
-    .then((res)=>{
-      setQueue(res.data.sort((a:QueueItem, b:QueueItem) => b.votesCount - a.votesCount))
-    }).catch((err)=>{
-      return err;
-})
-}
-function getCurrentVideo(username:string,setCurrentVideo:React.Dispatch<React.SetStateAction<QueueItem|undefined>>){
-  axios.get("/api/streams/active?userName="+username)
-  .then((res)=>{
-    if(res.data){
-      setCurrentVideo(res.data)
-    }else{
-      setCurrentVideo(undefined);
-    }
-  }).catch((err)=>{
-    return err;
-  })
-}
+
 export default function CreatorDashboard({params}: {params: {username: string}}) {
   const [currentVideo, setCurrentVideo] = useState<QueueItem>()
   const [newVideoUrl, setNewVideoUrl] = useState("")
@@ -78,6 +59,9 @@ export default function CreatorDashboard({params}: {params: {username: string}})
       console.log(data)
       setQueue((prevQueue) => [...prevQueue, data]);
     })
+    return ()=>{
+      // socket.disconnect();
+    }
   },[username])
   const addToQueue = () => {
     const videoId = newVideoUrl.split("v=")[1]
