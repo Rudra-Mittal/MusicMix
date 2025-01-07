@@ -1,0 +1,25 @@
+import { Socket } from "socket.io";
+import {rooms } from "../miscellaneous/maps";
+import redisClient from "../../app/lib/redis";
+import { io } from "../miscellaneous/serverConfig";
+
+export async function joinStream(socket:Socket, room:any) {
+    const username = socket.data?.session?.user?.username || "";
+      rooms.set(room,[...rooms.get(room)||[],socket.id]);
+      console.log("rooms",rooms); 
+      const streamIdx = await redisClient.zRange(`streams:${room}`, 0, -1);
+      console.log(streamIdx);
+      const streamData = await Promise.all(streamIdx.map(async (streamId) => {
+        const stream = await redisClient.hGetAll(streamId);
+        return {
+          id:stream.id,
+          videoId:stream.videoId,
+          title:stream.title,
+          thumbnail:stream.thumbnail,
+          votesCount:stream.votes,
+          vote:(username=="")?false:await redisClient.sIsMember(`streamVotes:${room}:${stream.videoId}`,username)
+        };
+      }));
+      
+      io.to(socket.id).emit("initialStreams", streamData);
+}
