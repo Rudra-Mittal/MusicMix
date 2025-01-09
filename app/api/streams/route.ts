@@ -4,7 +4,7 @@ import prisma from "@/app/lib/db";
 import { getServerSession } from "next-auth";
 import { options } from "@/app/config/auth";
 // @ts-ignore
-import youtubesearchapi from "youtube-search-api"
+import exp from "constants";
 
 // create stream api
 export async function POST(req:NextRequest){

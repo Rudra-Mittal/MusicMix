@@ -1,8 +1,5 @@
-import  redisClient  from "./app/lib/redis";
-// @ts-ignore
+import {app,io} from "./controllers/miscellaneous/serverConfig";
 import { authentication } from "./app/middlewares/auth";
-import {app} from "./controllers/miscellaneous/serverConfig";
-import {io} from "./controllers/miscellaneous/serverConfig";
 import { createStream } from "./controllers/stream/create";
 import { deleteStream } from "./controllers/stream/delete";
 import { active, getActive } from "./controllers/stream/active";

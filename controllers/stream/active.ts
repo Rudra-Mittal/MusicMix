@@ -17,7 +17,6 @@ export async function active(socket:Socket, data:any) {
       id: streamData.id,
       type: streamData.type,
       userName: streamData.userName,
-      url: streamData.url,
       title: streamData.title,
       videoId: streamData.videoId,
       votes: streamData.votes,

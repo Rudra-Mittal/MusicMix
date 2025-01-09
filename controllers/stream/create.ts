@@ -15,7 +15,6 @@ export async function createStream(socket:Socket, data:any) {
           id: randomUUID(),
           type: "youtube",
           userName: data.userName,
-          url: data.url,
           title: videoDetails.title,
           videoId: data.videoId,
           votes: 0,

@@ -4,13 +4,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Plus, SkipForward, SortDesc, Trash2 } from "lucide-react"
-import axios from "axios"
+import { Plus, SkipForward, Trash2 } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { CreateStreamSchema } from "../utils/types"
 import YouTubeAudioPlayer from "@/app/components/player"
 import { socket } from "../socket"
+import SearchBar  from "../components/searchbar"
 interface QueueItem {
   id:string
   videoId: string
@@ -121,7 +121,7 @@ export default  function OwnerStreamControl() {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">{session?.user?.username} Stream Control</h1>
-      
+      <SearchBar username={session?.user.username||""}/>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <h2 className="text-xl font-semibold mb-4">Now Playing</h2>

@@ -6,11 +6,9 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ThumbsUp, Plus, Divide } from "lucide-react"
-import axios from "axios"
-import YouTube from "react-youtube"
 import YouTubeAudioPlayer from "@/app/components/player"
 import { socket } from "../../socket"
-import { count } from "console"
+import { SearchBar } from "@/app/components/searchbar"
 interface QueueItem {
   id: string
   videoId: string
@@ -25,14 +23,12 @@ export default function CreatorDashboard({params}: {params: {username: string}})
   const [newVideoUrl, setNewVideoUrl] = useState("")
   const username = decodeURIComponent(params.username);
   const [queue, setQueue] = useState<QueueItem[]>([]);
-  const userLike= useState<boolean[]>([]);  
   useEffect(()=>{
     
     socket.on("error",(data)=>{
       console.log(data);
     })
     socket.on("voteUpdate", (data) => {
-      // console.log(queue);
       console.log(data);
       setQueue((prevqueue)=>[...prevqueue.map((item)=>(item.videoId==data.videoId)?{...item,votesCount:data.votesCount,vote:data.voteByUser}:item)].sort((a:QueueItem, b:QueueItem) => b.votesCount - a.votesCount));
       });
@@ -63,14 +59,6 @@ export default function CreatorDashboard({params}: {params: {username: string}})
       // socket.disconnect();
     }
   },[username])
-  const addToQueue = () => {
-    const videoId = newVideoUrl.split("v=")[1]
-    if (videoId) {
-      socket.emit("createStream",{userName:username,videoId:videoId,url:newVideoUrl});
-    }else{
-      alert("Invalid  Youtube URL")
-    }
-  }
    const handleVote = (id: string,vote:boolean) => {
     console.log("Voting for",id,vote);
     socket.emit("voteStream",{owner:username, videoId:id,count:vote});
@@ -78,6 +66,7 @@ export default function CreatorDashboard({params}: {params: {username: string}})
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">{username}  Stream</h1>
+      <SearchBar   username={username} />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <h2 className="text-xl font-semibold mb-4">Now Playing</h2>
@@ -93,7 +82,7 @@ export default function CreatorDashboard({params}: {params: {username: string}})
               onChange={(e) => setNewVideoUrl(e.target.value)}
               className="flex-grow"
               />
-            <Button onClick={addToQueue}>
+            <Button >
               <Plus className="mr-2 h-4 w-4" /> Add
             </Button>
           </div>

@@ -1,7 +1,5 @@
 "use client"
-import { signIn } from "next-auth/react";
-import Appbar from "./components/appbar";
-import { Button,ButtonUi } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import { Music, Play, Vote, Users } from "lucide-react"
