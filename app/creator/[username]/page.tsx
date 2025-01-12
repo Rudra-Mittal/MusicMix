@@ -8,29 +8,24 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { ThumbsUp, Plus, Divide } from "lucide-react"
 import YouTubeAudioPlayer from "@/app/components/player"
 import { socket } from "../../socket"
-import { SearchBar } from "@/app/components/searchbar"
-interface QueueItem {
-  id: string
-  videoId: string
-  title: string
-  thumbnail: string
-  votesCount: number
-  vote:boolean
-}
+import  SearchBar  from "@/app/components/searchbar"
+import { CreatorQueueItem} from "../../utils/types"
+import { DeleteC, InitalStreamsC, NewStreamC } from "@/app/utils/Stream-functions/stream-listeners"
+import { VoteC } from "@/app/utils/Stream-functions/vote-listeners"
 
 export default function CreatorDashboard({params}: {params: {username: string}}) {
-  const [currentVideo, setCurrentVideo] = useState<QueueItem>()
+  const [currentVideo, setCurrentVideo] = useState<CreatorQueueItem>()
   const [newVideoUrl, setNewVideoUrl] = useState("")
   const username = decodeURIComponent(params.username);
-  const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [queue, setQueue] = useState<CreatorQueueItem[]>([]);
   useEffect(()=>{
     
     socket.on("error",(data)=>{
       console.log(data);
     })
     socket.on("voteUpdate", (data) => {
-      console.log(data);
-      setQueue((prevqueue)=>[...prevqueue.map((item)=>(item.videoId==data.videoId)?{...item,votesCount:data.votesCount,vote:data.voteByUser}:item)].sort((a:QueueItem, b:QueueItem) => b.votesCount - a.votesCount));
+      console.log("Vote update",data); 
+      VoteC({data,setQueue}); 
       });
 
     socket.emit("joinRoom",username);
@@ -38,22 +33,20 @@ export default function CreatorDashboard({params}: {params: {username: string}})
     socket.on("connect",()=>{
       console.log("Connected to socket");
     })
-    socket.once("initialStreams",(data:QueueItem[])=>{
-      console.log(data)
-      setQueue([...data].sort((a:QueueItem, b:QueueItem) => b.votesCount - a.votesCount));
+    socket.once("initialStreams",(data:CreatorQueueItem[])=>{
+      InitalStreamsC({data,setQueue});
     })
-    socket.on("deleteStream",(data:QueueItem)=>{
-      setQueue((prevQueue) => [...prevQueue.filter((item)=>item.videoId!=data.videoId)]);
+    socket.on("deleteStream",(data:CreatorQueueItem)=>{
+      DeleteC({data,setQueue});
+
     })
-    socket.on("activeStream",(data:QueueItem)=>{
+    socket.on("activeStream",(data:CreatorQueueItem)=>{
       if(data.videoId==""){
         setCurrentVideo(undefined);
       }else setCurrentVideo(data);
     })
-    socket.on("newStream",(data:QueueItem)=>{
-      console.log(queue);
-      console.log(data)
-      setQueue((prevQueue) => [...prevQueue, data]);
+    socket.on("newStream",(data:CreatorQueueItem)=>{
+      NewStreamC({data,setQueue});
     })
     return ()=>{
       // socket.disconnect();
@@ -61,6 +54,7 @@ export default function CreatorDashboard({params}: {params: {username: string}})
   },[username])
    const handleVote = (id: string,vote:boolean) => {
     console.log("Voting for",id,vote);
+    console.log("Queue",queue);
     socket.emit("voteStream",{owner:username, videoId:id,count:vote});
   }
   return (

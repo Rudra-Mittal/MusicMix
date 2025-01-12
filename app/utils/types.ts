@@ -9,3 +9,19 @@ export const VoteSchema = z.object({
     streamId: z.string(),
     vote: z.boolean().default(false),    
 })
+export interface DashBoardQueueItem {
+    id:string
+    videoId: string
+    title: string
+    thumbnail: string
+    votesCount: number
+}
+
+export interface CreatorQueueItem {
+    id:string
+    videoId: string
+    title: string
+    thumbnail: string
+    votesCount: number
+    vote: boolean
+}

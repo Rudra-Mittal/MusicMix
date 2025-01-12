@@ -56,7 +56,7 @@ export default function SearchBar({username}: {username: string}) {
         handleSearch(query);
         setIsOpen(true);
         setIsExpanded(true);
-      }, 400);
+      }, 300);
     } else {
       setResults([]);
       setIsOpen(false);
@@ -73,6 +73,8 @@ export default function SearchBar({username}: {username: string}) {
     const handleEscKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         handleCollapse();
+      } else if(event.key==='Enter'){
+        handleSearch(query);
       }
     };
 

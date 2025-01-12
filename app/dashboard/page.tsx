@@ -11,20 +11,16 @@ import { CreateStreamSchema } from "../utils/types"
 import YouTubeAudioPlayer from "@/app/components/player"
 import { socket } from "../socket"
 import SearchBar  from "../components/searchbar"
-interface QueueItem {
-  id:string
-  videoId: string
-  title: string
-  thumbnail: string
-  votesCount: number
-}
-
+import { ModeToggle } from "../components/switchTheme"
+import { DashBoardQueueItem} from "../utils/types"
+import { voteD } from "../utils/Stream-functions/vote-listeners"
+import { DeleteD, InitalStreamsD, NewStreamD } from "../utils/Stream-functions/stream-listeners"
 export default  function OwnerStreamControl() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [currentVideo, setCurrentVideo] = useState<QueueItem | undefined>(undefined);
+  const [currentVideo, setCurrentVideo] = useState<DashBoardQueueItem | undefined>(undefined);
   const [newVideoUrl, setNewVideoUrl] = useState("");
-  const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [queue, setQueue] = useState<DashBoardQueueItem[]>([]);
   const socketInitialized = useRef(false);
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -37,32 +33,24 @@ export default  function OwnerStreamControl() {
       setNewVideoUrl("");
       setQueue([]);
 
-      const handleNewStream = (data: any) => {
-        console.log(data);
-        setQueue((prevQueue) => [...prevQueue, data]);
-      };
-
-      const handleInitialStreams = (data: any) => {
-        console.log(data);
-        setQueue([...data].sort((a:QueueItem, b:QueueItem) => b.votesCount - a.votesCount));
-      };
       socket.on("error",(data)=>{
         console.log(data);
       })
-      socket.on("deleteStream",(data:QueueItem)=>{
-        setQueue((prevQueue) => [...prevQueue.filter((item)=>item.videoId!=data.videoId)]);
+      socket.on("deleteStream",(data:DashBoardQueueItem)=>{
+        DeleteD({data,setQueue});
       })
       socket.on("voteUpdate", (data) => {
-        console.log(queue);
-        console.log(data);
-        setQueue((prevqueue)=>[...prevqueue.map((item)=>(item.videoId==data.videoId)?{...item,votesCount:data.votesCount}:item)].sort((a:QueueItem, b:QueueItem) => b.votesCount - a.votesCount));
+          voteD({data,setQueue});
         });
-      socket.on("newStream", handleNewStream);
+      socket.on("newStream",(data:DashBoardQueueItem)=>{
+        NewStreamD({data,setQueue});
+    });
       socket.emit("joinRoom", session.user.username || "");
-      socket.once("initialStreams", handleInitialStreams);
+      socket.once("initialStreams", (data: DashBoardQueueItem[]) => {
+        InitalStreamsD({data,setQueue});
+      });
       socket.emit("getActiveStream",session.user.username);
-      socket.on("activeStream",(data:QueueItem)=>{
-        console.log(data);
+      socket.on("activeStream",(data:DashBoardQueueItem)=>{
         setCurrentVideo(data);
       })
       socket.on("connect", () => {
@@ -72,7 +60,7 @@ export default  function OwnerStreamControl() {
       socketInitialized.current = true;
 
       return () => {
-        socket.off("initialStreams", handleInitialStreams);
+        socket.off("initialStreams");
         socket.off("connect");
         // socket.disconnect();
       };
@@ -122,6 +110,7 @@ export default  function OwnerStreamControl() {
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">{session?.user?.username} Stream Control</h1>
       <SearchBar username={session?.user.username||""}/>
+      <ModeToggle/>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <h2 className="text-xl font-semibold mb-4">Now Playing</h2>

@@ -5,6 +5,7 @@ import { Slider } from "@/components/ui/slider"
 import { Music, Play, Vote, Users } from "lucide-react"
 import Link from "next/link"
 import AuthOptions from "./components/authoptions";
+import { ModeToggle } from "./components/switchTheme"
 export default function Home() {
   return (
     <div>
