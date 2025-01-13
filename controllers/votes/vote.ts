@@ -1,8 +1,7 @@
 import { Socket } from "socket.io";
 import { io } from "../miscellaneous/serverConfig";
 import redisClient from "../../app/lib/redis";
-import { rooms } from "../miscellaneous/maps";
-
+import { rooms,user } from "../miscellaneous/maps";
 export async function vote(socket:Socket, data:any) {
     const username = socket.data?.session?.user?.username || "";
       if (!username) {
@@ -37,6 +36,6 @@ export async function vote(socket:Socket, data:any) {
       }
     
       const votes = await redisClient.hGet(streamId, "votes");
-      io.to(socket.id).emit("voteUpdate", { videoId: data.videoId, votesCount: votes, voteByUser:data.count });
-      io.to(rooms.get(data.owner||"") || []).except(socket.id).emit("voteUpdate", { videoId: data.videoId, votesCount: votes});
+      io.to(user.get(username)||[]).emit("voteUpdate", { videoId: data.videoId, votesCount: votes, voteByUser:data.count });
+      io.to(rooms.get(data.owner||"") || []).except(user.get(username)||[]).emit("voteUpdate", { videoId: data.videoId, votesCount: votes});
 }

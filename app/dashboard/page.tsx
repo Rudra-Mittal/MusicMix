@@ -109,10 +109,10 @@ export default  function OwnerStreamControl() {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">{session?.user?.username} Stream Control</h1>
-      <SearchBar username={session?.user.username||""}/>
       <ModeToggle/>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
+      <SearchBar username={session?.user.username||""}/>
           <h2 className="text-xl font-semibold mb-4">Now Playing</h2>
           <Card className="p-4">
             <div className="aspect-video mb-4">
@@ -176,9 +176,6 @@ export default  function OwnerStreamControl() {
           </ScrollArea>
         </div>
       </div>
-      <button onClick={()=>{
-        socket.emit("help",{data:"help"});
-      }} >click me hellp hellpo</button>
     </div>
   )
 }

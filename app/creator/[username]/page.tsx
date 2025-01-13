@@ -1,122 +1,215 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { ThumbsUp, Plus, Divide } from "lucide-react"
+import { ThumbsUp, Plus } from 'lucide-react'
 import YouTubeAudioPlayer from "@/app/components/player"
 import { socket } from "../../socket"
-import  SearchBar  from "@/app/components/searchbar"
-import { CreatorQueueItem} from "../../utils/types"
+import SearchBar from "@/app/components/searchbar"
+import { CreatorQueueItem } from "../../utils/types"
 import { DeleteC, InitalStreamsC, NewStreamC } from "@/app/utils/Stream-functions/stream-listeners"
 import { VoteC } from "@/app/utils/Stream-functions/vote-listeners"
+
+const pageVariants = {
+  initial: { opacity: 0, y: 20 },
+  in: { opacity: 1, y: 0 },
+  out: { opacity: 0, y: -20 }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 }
+}
 
 export default function CreatorDashboard({params}: {params: {username: string}}) {
   const [currentVideo, setCurrentVideo] = useState<CreatorQueueItem>()
   const [newVideoUrl, setNewVideoUrl] = useState("")
   const username = decodeURIComponent(params.username);
   const [queue, setQueue] = useState<CreatorQueueItem[]>([]);
-  useEffect(()=>{
-    
-    socket.on("error",(data)=>{
+
+  useEffect(() => {
+    socket.on("error", (data) => {
       console.log(data);
     })
     socket.on("voteUpdate", (data) => {
-      console.log("Vote update",data); 
-      VoteC({data,setQueue}); 
-      });
+      console.log("Vote update", data);
+      VoteC({data, setQueue});
+    });
 
-    socket.emit("joinRoom",username);
-    socket.emit("getActiveStream",username);
-    socket.on("connect",()=>{
+    socket.emit("joinRoom", username);
+    socket.emit("getActiveStream", username);
+    socket.on("connect", () => {
       console.log("Connected to socket");
     })
-    socket.once("initialStreams",(data:CreatorQueueItem[])=>{
-      InitalStreamsC({data,setQueue});
+    socket.once("initialStreams", (data: CreatorQueueItem[]) => {
+      InitalStreamsC({data, setQueue});
     })
-    socket.on("deleteStream",(data:CreatorQueueItem)=>{
-      DeleteC({data,setQueue});
-
+    socket.on("deleteStream", (data: CreatorQueueItem) => {
+      DeleteC({data, setQueue});
     })
-    socket.on("activeStream",(data:CreatorQueueItem)=>{
-      if(data.videoId==""){
+    socket.on("activeStream", (data: CreatorQueueItem) => {
+      if (data.videoId == "") {
         setCurrentVideo(undefined);
-      }else setCurrentVideo(data);
+      } else setCurrentVideo(data);
     })
-    socket.on("newStream",(data:CreatorQueueItem)=>{
-      NewStreamC({data,setQueue});
+    socket.on("newStream", (data: CreatorQueueItem) => {
+      NewStreamC({data, setQueue});
     })
-    return ()=>{
+    return () => {
       // socket.disconnect();
     }
-  },[username])
-   const handleVote = (id: string,vote:boolean) => {
-    console.log("Voting for",id,vote);
-    console.log("Queue",queue);
-    socket.emit("voteStream",{owner:username, videoId:id,count:vote});
+  }, [username])
+
+  const handleVote = (id: string, vote: boolean) => {
+    console.log("Voting for", id, vote);
+    console.log("Queue", queue);
+    socket.emit("voteStream", {owner: username, videoId: id, count: vote});
   }
+
+  const handleAddToQueue = () => {
+    // Implement the logic to add a new video to the queue
+    console.log("Adding to queue:", newVideoUrl);
+    // Reset the input field after adding
+    setNewVideoUrl("");
+  }
+
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">{username}  Stream</h1>
-      <SearchBar   username={username} />
+    <motion.div
+      initial="initial"
+      animate="in"
+      exit="out"
+      variants={pageVariants}
+      transition={{ duration: 0.5 }}
+      className="container mx-auto p-4"
+    >
+      <motion.h1
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="text-2xl font-bold mb-6"
+      >
+        {username} Stream
+      </motion.h1>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3 }}
+      >
+        <SearchBar username={username} />
+      </motion.div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
+        <motion.div
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4 }}
+          className="z-0"
+        >
           <h2 className="text-xl font-semibold mb-4">Now Playing</h2>
-          <div className="aspect-video mb-4">
-         {(currentVideo)?<YouTubeAudioPlayer videoId={currentVideo?.videoId} thumbnailUrl={currentVideo?.thumbnail}/>:<div>No active songs found</div>}
-          </div>
+          <motion.div
+            className="aspect-video mb-4 z-0"
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            {currentVideo ? (
+              <YouTubeAudioPlayer videoId={currentVideo?.videoId} thumbnailUrl={currentVideo?.thumbnail} />
+            ) : (
+              <div>No active songs found</div>
+            )}
+          </motion.div>
           <h2 className="text-xl font-semibold mb-4">Add to Queue</h2>
-          <div className="flex gap-2 mb-6">
+          <motion.div
+            className="flex gap-2 mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
             <Input 
               type="text" 
               placeholder="Paste YouTube URL here" 
               value={newVideoUrl}
               onChange={(e) => setNewVideoUrl(e.target.value)}
               className="flex-grow"
-              />
-            <Button >
+            />
+            <Button 
+              onClick={handleAddToQueue}
+            >
               <Plus className="mr-2 h-4 w-4" /> Add
             </Button>
-          </div>
-        </div>        
-        <div>
+          </motion.div>
+        </motion.div>        
+        <motion.div
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4 }}
+          className="z-0"
+        >
           <h2 className="text-xl font-semibold mb-4">Upcoming Songs</h2>
           <ScrollArea className="h-[400px] w-full rounded-md border p-4">
-            <div className="space-y-4">
-              {queue.map((item, index) => (
-                <Card key={item.id}>
-                  <CardContent className="flex items-center p-4">
-                    <img 
-                      src={item.thumbnail} 
-                      alt={item.title} 
-                      className="w-24 h-18 object-cover rounded mr-4"
-                    />
-                    <div className="flex-grow">
-                      <h3 className="font-semibold">{item.title}</h3>
-                      <p className="text-sm text-gray-500">{item.votesCount} votes</p>
-                      {index < 3 && (
-                        <span className="inline-block bg-primary text-primary-foreground text-xs px-2 py-1 rounded mt-1">
-                          Top {index + 1}
-                        </span>
-                      )}
-                    </div>
-                    <Button 
-                      variant={(!item.vote)?"outline":"destructive"} 
-                      size="sm" 
-                      onClick={() =>handleVote(item.videoId,!item.vote) }
-                    >
-                      <ThumbsUp className="mr-2 h-4 w-4" />
-                      Vote
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <LayoutGroup>
+              <AnimatePresence>
+                {queue.map((item, index) => (
+                  <motion.div
+                    key={item.id}
+                    layout
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    variants={itemVariants}
+                    transition={{ 
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 30,
+                      duration: 0.5
+                    }}
+                    className="mb-4 z-0"
+                  >
+                    <Card>
+                      <CardContent className="flex items-center p-4">
+                        <motion.img 
+                          src={item.thumbnail} 
+                          alt={item.title} 
+                          className="w-24 h-18 object-cover rounded mr-4"
+                          whileHover={{ scale: 1.1 }}
+                          transition={{ type: "spring", stiffness: 300 }}
+                        />
+                        <div className="flex-grow">
+                          <h3 className="font-semibold">{item.title}</h3>
+                          <p className="text-sm text-gray-500">{item.votesCount} votes</p>
+                          {index < 3 && (
+                            <motion.span
+                              className="inline-block bg-primary text-primary-foreground text-xs px-2 py-1 rounded mt-1"
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: 0.2 }}
+                            >
+                              Top {index + 1}
+                            </motion.span>
+                          )}
+                        </div>
+                        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                          <Button 
+                            variant={(!item.vote) ? "outline" : "destructive"} 
+                            size="sm" 
+                            onClick={() => handleVote(item.videoId, !item.vote)}
+                          >
+                            <ThumbsUp className="mr-2 h-4 w-4" />
+                            Vote
+                          </Button>
+                        </motion.div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </LayoutGroup>
           </ScrollArea>
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   )
 }
+
