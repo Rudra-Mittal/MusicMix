@@ -78,6 +78,7 @@ export default function CreatorDashboard({params}: {params: {username: string}})
   }
 
   return (
+    // <div>
     <motion.div
       initial="initial"
       animate="in"
@@ -86,6 +87,13 @@ export default function CreatorDashboard({params}: {params: {username: string}})
       transition={{ duration: 0.5 }}
       className="container mx-auto p-4"
     >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3 }}
+      >
+        
+      </motion.div>
       <motion.h1
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -94,14 +102,8 @@ export default function CreatorDashboard({params}: {params: {username: string}})
       >
         {username} Stream
       </motion.h1>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.3 }}
-      >
         <SearchBar username={username} />
-      </motion.div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 ">
         <motion.div
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
@@ -210,6 +212,7 @@ export default function CreatorDashboard({params}: {params: {username: string}})
         </motion.div>
       </div>
     </motion.div>
+    // </div>
   )
 }
 

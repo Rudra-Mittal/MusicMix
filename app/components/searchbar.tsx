@@ -32,18 +32,17 @@ export default function SearchBar({username}: {username: string}) {
     currentRequest.current = controller;
 
     try {
+      // make sure that user is connected to internet
       const response = await fetch(`/api/search?q=${query}`, { signal: controller.signal });
-      const data = await response.json();
+      const data = await response.json()
       const res = data.items.slice(0, 10).map((item: any) => ({
         title: item.title,
         url: item.thumbnail.thumbnails[0].url.startsWith('//') ? `https:${item.thumbnail.thumbnails[0].url}` : item.thumbnail.thumbnails[0].url,
         videoId: item.id,
       }));
       setResults(res);
-    } catch (error: any) {
-      if (error.name !== 'AbortError') {
-        console.error('Search error:', error);
-      }
+    } catch (error: any) { 
+      console.log(error);
     }
   };
 
@@ -133,7 +132,7 @@ export default function SearchBar({username}: {username: string}) {
       ref={containerRef}
       className="flex justify-center items-center w-full"
     >
-      <div className={`relative transition-all duration-300 ease-in-out ${isExpanded ? 'w-full max-w-xl sm:max-w-2xl md:max-w-3xl lg:max-w-4xl' : 'w-auto'}`}>
+      <div className={`z-10 relative  transition-all duration-300 ease-in-out ${isExpanded ? 'w-full max-w-xl sm:max-w-2xl md:max-w-3xl lg:max-w-4xl' : 'w-auto'}`}>
         <form onSubmit={handleSubmit} className="flex items-center">
           <div className="relative w-full">
             <Search 
@@ -147,7 +146,7 @@ export default function SearchBar({username}: {username: string}) {
               onChange={(e) => setQuery(e.target.value)}
               onFocus={() => setIsExpanded(true)}
               onKeyDown={handleKeyDown}
-              className={`pl-10 pr-4 py-2 w-full rounded-2xl focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-300 ease-in-out ${isExpanded ? 'opacity-100' : 'opacity-0 w-0 p-0'}`}
+              className={`pl-10 pr-4 py-2 w-full rounded-2xl focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-900 ease-in-out ${isExpanded ? 'opacity-100' : 'opacity-0 w-0 p-0'}`}
             />
           </div>
           <Button 
@@ -164,11 +163,11 @@ export default function SearchBar({username}: {username: string}) {
           </Button>
         </form>
         {isOpen && results.length > 0 && (
-          <div ref={dropdownRef} className="absolute z-15 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-80 overflow-y-auto">
+          <div ref={dropdownRef} className="absolute left-0 right-0  mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-80  overflow-y-auto">
             {results.map((result, index) => (
               <div
                 key={index}
-                className={`px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center ${index === selectedIndex ? 'bg-gray-100' : ''}`}
+                className={`px-4 py-2 w-full hover:bg-gray-100 cursor-pointer flex items-center${index === selectedIndex ? 'bg-gray-100' : ''}`}
                 onClick={() => {
                   handleCreateStream(result.videoId);
                   handleCollapse();

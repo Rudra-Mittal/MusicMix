@@ -112,6 +112,19 @@ export default function YouTubeAudioPlayer({ videoId, thumbnailUrl }: YouTubePla
       }
     }
   }, [isMuted])
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && isPlaying) {
+        playerRef.current?.internalPlayer.playVideo();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isPlaying]);
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
@@ -150,7 +163,7 @@ export default function YouTubeAudioPlayer({ videoId, thumbnailUrl }: YouTubePla
   if (!videoId) {
     return (
       <div className="flex items-center justify-center h-64 bg-background rounded-xl">
-        <h1 className="text-2xl font-bold text-foreground">Video not found</h1>
+        <h1 className="text-2xl font-bold text-foreground">No Active Stream</h1>
       </div>
     )
   }

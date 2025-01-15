@@ -6,6 +6,7 @@ import { active, getActive } from "./controllers/stream/active";
 import { vote } from "./controllers/votes/vote";
 import { joinStream } from "./controllers/general/join";
 import { disconnect } from "./controllers/general/disconnect";
+import { httpServer,port,hostname } from "./controllers/miscellaneous/serverConfig";
 app.prepare().then(async () => {
   io.use(authentication);
   
@@ -37,5 +38,13 @@ app.prepare().then(async () => {
     
   });
  
+});
+httpServer
+.once("error", (err) => {
+  console.error(err);
+  process.exit(1);
+})
+.listen(port, () => {
+  console.log(`> Ready on http://${hostname}:${port}`);
 });
 
