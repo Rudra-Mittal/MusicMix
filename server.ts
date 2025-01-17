@@ -7,7 +7,7 @@ import { vote } from "./controllers/votes/vote";
 import { joinStream } from "./controllers/general/join";
 import { disconnect } from "./controllers/general/disconnect";
 import { httpServer,port,hostname } from "./controllers/miscellaneous/serverConfig";
-app.prepare().then(async () => {
+app.prepare().then( () => {
   io.use(authentication);
   
   io.on("connection", async (socket) => {

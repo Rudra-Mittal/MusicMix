@@ -10,6 +10,7 @@ datasource db {
 model User{
   id            String    @id @default(uuid())
   username      String    @unique
+  password      String?
   email         String    @unique
   name          String
   provider      Provider
@@ -54,4 +55,5 @@ enum StreamType{
 // }
 enum Provider{
   google
+  local
 }

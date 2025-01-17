@@ -1,9 +1,16 @@
 import { PrismaClient } from '@prisma/client';
 import { NextAuthOptions, Session } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
-
+import jwt from "jsonwebtoken";
+import Credentials from 'next-auth/providers/credentials';
+import bcrypt from "bcryptjs";
+import {parse} from 'cookie'
 const prisma = new PrismaClient();
-
+declare module "next-auth" {
+    interface SignInCallbackParams {
+      state?: string;
+    }
+  }
 declare module 'next-auth' {
     interface Session {
         user: {
@@ -18,42 +25,64 @@ declare module 'next-auth' {
 export const options: NextAuthOptions = {
     providers: [
         GoogleProvider({
-            clientId: process.env.GOOGLE_ID || "",
-            clientSecret: process.env.GOOGLE_SECRET || "",
-        })
+            clientId: process.env.GOOGLE_ID!,
+            clientSecret: process.env.GOOGLE_SECRET!,
+        }),
+        Credentials({
+            name: "Credentials",
+            credentials: {
+                name: { label: "Name", type: "text" },
+                username: { label: "Username", type: "text" },
+                password: { label: "Password", type: "password" },
+                email: { label: "Email", type: "email" },
+
+            },
+            async authorize(credentials) {
+                if(!credentials){
+                    return null;
+                }
+                const { email, password } = credentials;
+                console.log(email, password);
+                const user = await prisma.user.findFirst({
+                    where: {
+                        email: email!,
+                    }
+                });
+                if(!user){
+                    return null;
+                }
+                const valid = await bcrypt.compare(password,user?.password!);
+                console.log(user);
+                if(valid){
+                    return {
+                        id: user.id,
+                        name: user.name,
+                        email: user.email,
+                        username: user.username,
+                    };
+                }
+                return null;
+            }
+        }),
         
     ],
-    secret: process.env.NEXTAUTH_SECRET || "rfhyiugyf",
+    secret: process.env.NEXTAUTH_SECRET!,
     callbacks: {
         async session({ session, token }) {
-            if (token?.user) {
-                session.user = token.user;
-                session.user.username=session.user.email?.split('@')[0];
+            // console.log("session","token");
+            // console.log(session,token.username);
+            if (token?.username) {  
+                session.user.username = token.username;
             }
             return session;
         },
-        async signIn({ user, account, profile }) {
-           try{
-            const userExists = await prisma.user.findFirst({
-                where: {
-                    email: user.email||""
-                }
-            });
-            if(!userExists){
-                await prisma.user.create({
-                    data: {
-                        email: user.email||"",
-                        name: user.name||"",
-                        username:user.email?.split('@')[0]||"",
-                        provider: "google",
-                    }
-                });
-            }
-           }catch(err){
-                console.log(err);
-                return false;
-            }
+        async signIn({user,account}) {
+            if(account?.provider === "credentials"){
             return true;
+            }
+            // const username = parse(account.id_token);
+            // console.log(req);
+            return false
         },
         async jwt({ token, user, account, profile }) {
             if (user) {
@@ -67,5 +96,8 @@ export const options: NextAuthOptions = {
             }
             return token;
         }
+    },
+    pages:{
+        signIn:'/auth'
     }
 };

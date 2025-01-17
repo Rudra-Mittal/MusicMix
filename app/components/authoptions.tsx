@@ -16,7 +16,7 @@ export default function AuthOptions() {
         );
     } else {
         return (
-            <button className="bg-white/10 text-white-600 rounded" onClick={() => signIn('google')}>Login</button>
+            <button className="bg-white/10 text-white-600 rounded" onClick={() => signIn()}>Login</button>
         );
     }
 }
