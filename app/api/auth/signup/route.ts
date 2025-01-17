@@ -4,7 +4,6 @@ import prisma from '@/app/lib/db'
 export async function POST(req: Request) {
   try {
     const { email, password, username,name }:{email:string,password:string,username:string,name:string} = await req.json()
-    console.log(password);
     const hashedPassword = await bcrypt.hash(password, 10)
     const user = await prisma.user.create({
       data: {
@@ -12,7 +11,7 @@ export async function POST(req: Request) {
         password: hashedPassword,
         username,
         name:name,
-        provider:'google'
+        provider:'local'
       },
     })
 

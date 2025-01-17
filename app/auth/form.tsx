@@ -14,10 +14,10 @@ export default function AuthForm() {
   const [isGoogleUsername, setIsGoogleUsername] = useState(false)
   const router = useRouter()
 
+  const callbackUrl = new URLSearchParams(window.location.search).get('callbackUrl') || '/';
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-
     if (isSignUp) {
       // Handle sign up
       const res = await fetch('/api/auth/signup', {
@@ -34,7 +34,7 @@ export default function AuthForm() {
             if (result?.error) {
               setError(result.error)
             } else {
-              router.push('/dashboard') // Redirect to dashboard after successful sign up and sign in
+              router.push(callbackUrl) // Redirect to dashboard after successful sign up and sign in
             }
           })
       } else {
@@ -49,7 +49,7 @@ export default function AuthForm() {
           if (result?.error) {
             setError(result.error)
           } else {
-            router.push('/') // Redirect to dashboard after successful sign in
+            router.push(callbackUrl) // Redirect to dashboard after successful sign in
           }
         })
     }
@@ -62,7 +62,8 @@ export default function AuthForm() {
       return
     }
     if(isSignUp) document.cookie = `username=${username}; path=/;`;
-    signIn('google');
+    console.log(callbackUrl)
+    signIn('google', { callbackUrl: callbackUrl });
   }
 
   if (isGoogleUsername&& isSignUp) {
@@ -87,7 +88,7 @@ export default function AuthForm() {
             className="w-full px-4 py-2 border flex justify-center items-center gap-2 border-slate-200 rounded-lg text-slate-700 hover:border-slate-400 hover:text-slate-900 hover:shadow transition duration-150"
           >
             <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google logo" className="w-6 h-6" />
-            <span>Continue with Google</span>
+            <span>{(isSignUp)?"SignUp":"Login"} with Google</span>
           </button>
         </div>
       </form>

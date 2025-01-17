@@ -15,6 +15,8 @@ import { ModeToggle } from "../components/switchTheme"
 import { DashBoardQueueItem} from "../utils/types"
 import { voteD } from "../utils/Stream-functions/vote-listeners"
 import { DeleteD, InitalStreamsD, NewStreamD } from "../utils/Stream-functions/stream-listeners"
+import App from "next/app"
+import Appbar from "../components/appbar"
 export default  function OwnerStreamControl() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -108,11 +110,11 @@ export default  function OwnerStreamControl() {
   }
   return (
     <div className="container mx-auto p-4">
+      <Appbar/>
       <h1 className="text-2xl font-bold mb-6">{session?.user?.username} Stream Control</h1>
-      <ModeToggle/>
+      <SearchBar username={session?.user.username||""}/>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-      <SearchBar username={session?.user.username||""}/>
           <h2 className="text-xl font-semibold mb-4">Now Playing</h2>
           <Card className="p-4">
             <div className="aspect-video mb-4">

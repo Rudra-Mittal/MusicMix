@@ -42,7 +42,6 @@ export const options: NextAuthOptions = {
                     return null;
                 }
                 const { email, password } = credentials;
-                console.log(email, password);
                 const user = await prisma.user.findFirst({
                     where: {
                         email: email!,
@@ -52,7 +51,6 @@ export const options: NextAuthOptions = {
                     return null;
                 }
                 const valid = await bcrypt.compare(password,user?.password!);
-                console.log(user);
                 if(valid){
                     return {
                         id: user.id,
@@ -69,10 +67,8 @@ export const options: NextAuthOptions = {
     secret: process.env.NEXTAUTH_SECRET!,
     callbacks: {
         async session({ session, token }) {
-            // console.log("session","token");
-            // console.log(session,token.username);
-            if (token?.username) {  
-                session.user.username = token.username;
+            if(token?.user){
+                session.user = token.user;
             }
             return session;
         },
@@ -80,8 +76,7 @@ export const options: NextAuthOptions = {
             if(account?.provider === "credentials"){
             return true;
             }
-            // const username = parse(account.id_token);
-            // console.log(req);
+            console.log(user);
             return false
         },
         async jwt({ token, user, account, profile }) {

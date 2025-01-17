@@ -2,7 +2,7 @@ import React from 'react';
 import AuthOptions from './authoptions'; 
 import { getServerSession } from 'next-auth';
 import { options } from '../config/auth';
-export default async function Appbar(){
+export default function Appbar(){
   // const data=await getServerSession(options);
   // console.log("datata",data);
   return (      

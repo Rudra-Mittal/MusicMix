@@ -8,10 +8,8 @@ import prisma from "@/app/lib/db";
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   console.log(req.url);
   if(req.method==='GET'&&req.url?.includes('/api/auth/callback/google')){
-    // console.log(req);
     // @ts-ignore
-    const username= req.cookies.get('username').value;
-    console.log(username);
+    const username= await req.cookies.get('username')?.value;
    const modifiedOptions = {
       ...options,
       callbacks: {
@@ -29,11 +27,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
                   if(userExists){
                     return true;
                   }
-                  // console.log("in ...nextauth")
+                  if(!username) return false;
                   await prisma.user.create({
                       data: {
                       email:user.email!,
-                      username:username!,
+                      username:username,
                       name:user.name!,
                       provider:'google'
                       },
@@ -45,7 +43,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
                   }
         },
         jwt : async ({token,user}:{token:any,user?:any})=>{
-          console.log("in jwt callback")
           if(user){
             const res=await prisma.user.findFirst({
               where :{
@@ -55,8 +52,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             if(!res){
               return null;
             }
-            token.username=res?.username;
-
           }
           return token
         }

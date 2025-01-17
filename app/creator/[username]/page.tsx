@@ -13,6 +13,7 @@ import SearchBar from "@/app/components/searchbar"
 import { CreatorQueueItem } from "../../utils/types"
 import { DeleteC, InitalStreamsC, NewStreamC } from "@/app/utils/Stream-functions/stream-listeners"
 import { VoteC } from "@/app/utils/Stream-functions/vote-listeners"
+import Appbar from "@/app/components/appbar"
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -78,7 +79,8 @@ export default function CreatorDashboard({params}: {params: {username: string}})
   }
 
   return (
-    // <div>
+    <div>
+      <Appbar/>
     <motion.div
       initial="initial"
       animate="in"
@@ -212,7 +214,7 @@ export default function CreatorDashboard({params}: {params: {username: string}})
         </motion.div>
       </div>
     </motion.div>
-    // </div>
+     </div>
   )
 }
 
