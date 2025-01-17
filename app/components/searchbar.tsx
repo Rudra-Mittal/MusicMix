@@ -5,7 +5,8 @@ import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
-import {socket} from "../socket"
+import { socket } from "../socket"
+
 interface SearchResult {
   title: string;
   url: string;
@@ -32,7 +33,6 @@ export default function SearchBar({username}: {username: string}) {
     currentRequest.current = controller;
 
     try {
-      // make sure that user is connected to internet
       const response = await fetch(`/api/search?q=${query}`, { signal: controller.signal });
       const data = await response.json()
       const res = data.items.slice(0, 10).map((item: any) => ({
@@ -72,7 +72,7 @@ export default function SearchBar({username}: {username: string}) {
     const handleEscKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         handleCollapse();
-      } else if(event.key==='Enter'){
+      } else if(event.key === 'Enter'){
         handleSearch(query);
       }
     };
@@ -105,9 +105,11 @@ export default function SearchBar({username}: {username: string}) {
     setIsExpanded(true);
     inputRef.current?.focus();
   };
+
   const handleCreateStream = (videoId: string) => {
-    socket.emit("createStream",{videoId,userName:username});
+    socket.emit("createStream", {videoId, userName: username});
   }
+
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {
       handleCollapse();
@@ -121,7 +123,7 @@ export default function SearchBar({username}: {username: string}) {
       e.preventDefault();
       handleCreateStream(results[selectedIndex].videoId);
       handleCollapse();
-    } else if (e.key==='Enter'){
+    } else if (e.key === 'Enter'){
       e.preventDefault();
       handleSearch(query);
     }
@@ -132,11 +134,11 @@ export default function SearchBar({username}: {username: string}) {
       ref={containerRef}
       className="flex justify-center items-center w-full"
     >
-      <div className={`z-10 relative  transition-all duration-300 ease-in-out ${isExpanded ? 'w-full max-w-xl sm:max-w-2xl md:max-w-3xl lg:max-w-4xl' : 'w-auto'}`}>
+      <div className={`z-10 relative transition-all duration-300 ease-in-out ${isExpanded ? 'w-full max-w-xl sm:max-w-2xl md:max-w-3xl lg:max-w-4xl' : 'w-auto'}`}>
         <form onSubmit={handleSubmit} className="flex items-center">
           <div className="relative w-full">
             <Search 
-              className={`absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}
+              className={`absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-white transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}
             />
             <Input
               ref={inputRef}
@@ -146,14 +148,14 @@ export default function SearchBar({username}: {username: string}) {
               onChange={(e) => setQuery(e.target.value)}
               onFocus={() => setIsExpanded(true)}
               onKeyDown={handleKeyDown}
-              className={`pl-10 pr-4 py-2 w-full rounded-2xl focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-900 ease-in-out ${isExpanded ? 'opacity-100' : 'opacity-0 w-0 p-0'}`}
+              className={`pl-10 pr-4 py-2 w-full rounded-2xl focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-900 ease-in-out ${isExpanded ? 'opacity-100' : 'opacity-0 w-0 p-0'} dark:bg-black dark:text-white dark:placeholder-gray-300`}
             />
           </div>
           <Button 
             type="button" 
             variant="ghost" 
             size="sm"
-            className={`rounded-full transition-all duration-300 ease-in-out flex items-center ${isExpanded ? 'w-0 p-0 overflow-hidden' : 'w-auto px-3'}`}
+            className={`rounded-full transition-all duration-300 ease-in-out flex items-center ${isExpanded ? 'w-0 p-0 overflow-hidden' : 'w-auto px-3'} dark:text-white dark:hover:bg-gray-900`}
             onClick={handleSearchIconClick}
           >
             <Search className="h-4 w-4 mr-2" />
@@ -163,24 +165,24 @@ export default function SearchBar({username}: {username: string}) {
           </Button>
         </form>
         {isOpen && results.length > 0 && (
-          <div ref={dropdownRef} className="absolute left-0 right-0  mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-80  overflow-y-auto">
+          <div ref={dropdownRef} className="absolute left-0 right-0 mt-1 bg-white dark:bg-black border border-gray-300 dark:border-white rounded-md shadow-lg dark:shadow-white/10 max-h-80 overflow-y-auto">
             {results.map((result, index) => (
               <div
                 key={index}
-                className={`px-4 py-2 w-full hover:bg-gray-100 cursor-pointer flex items-center${index === selectedIndex ? 'bg-gray-100' : ''}`}
+                className={`px-4 py-2 w-full hover:bg-gray-100 dark:hover:bg-gray-900 cursor-pointer flex items-center ${index === selectedIndex ? 'bg-gray-100 dark:bg-gray-900' : ''}`}
                 onClick={() => {
                   handleCreateStream(result.videoId);
                   handleCollapse();
                 }}
               >
                 <Image
-                  src={result.url}
+                  src={result.url || "/placeholder.svg"}
                   alt={result.title}
                   width={40}
                   height={30}
                   className="mr-2 rounded"
                 />
-                <span>{result.title}</span>
+                <span className="dark:text-white">{result.title}</span>
               </div>
             ))}
           </div>
