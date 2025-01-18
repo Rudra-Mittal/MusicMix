@@ -67,9 +67,11 @@ export const options: NextAuthOptions = {
     secret: process.env.NEXTAUTH_SECRET!,
     callbacks: {
         async session({ session, token }) {
+            console.log("token in auth",token)
             if(token?.user){
                 session.user = token.user;
             }
+            console.log("session in auth",session)
             return session;
         },
         async signIn({user,account}) {
@@ -79,8 +81,10 @@ export const options: NextAuthOptions = {
             console.log(user);
             return false
         },
-        async jwt({ token, user, account, profile }) {
-            if (user) {
+        async jwt({ token,user, account, profile }) {
+            // console.log("in jwt")
+            // console.log("user in jwt",user)
+            if(user){
                 token.user = user;
             }
             if (account) {

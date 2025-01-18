@@ -1,6 +1,6 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
@@ -12,9 +12,13 @@ export default function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isGoogleUsername, setIsGoogleUsername] = useState(false)
+  const [callbackUrl, setCallbackUrl] = useState('/');
+  useEffect(() => {
+    const url = new URLSearchParams(window.location.search).get('callbackUrl') || '/';
+    setCallbackUrl(url);
+  }, []);
+  
   const router = useRouter()
-
-  const callbackUrl = new URLSearchParams(window.location.search).get('callbackUrl') || '/';
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)

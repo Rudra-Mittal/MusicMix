@@ -49,10 +49,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
                 email:user.email
               }
             })
+            console.log(res);
             if(!res){
               return null;
             }
+            token.user={email:res.email,name:res.name,username:res.username};
           }
+          // console.log("user in jwt",user)
           return token
         }
       },
