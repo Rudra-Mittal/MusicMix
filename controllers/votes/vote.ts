@@ -1,5 +1,5 @@
 import { Socket } from "socket.io";
-import { io } from "../miscellaneous/serverConfig";
+import { io } from "../../server";
 import redisClient from "../../app/lib/redis";
 import { rooms,user } from "../miscellaneous/maps";
 export async function vote(socket:Socket, data:any) {

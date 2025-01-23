@@ -5,7 +5,7 @@ import YouTube from 'react-youtube'
 import { motion, AnimatePresence } from 'framer-motion'
 import * as Slider from '@radix-ui/react-slider'
 import { Play, Pause, Rewind, FastForward, Volume2, VolumeX } from 'lucide-react'
-
+import {socket} from "../socket"
 type YouTubePlayerProps = {
   videoId: string
   thumbnailUrl: string
@@ -18,13 +18,13 @@ const MusicBars = () => (
         key={i}
         className="w-1 bg-primary"
         animate={{
-          height: ['40%', '100%', '40%'],
+          height: ['20%', '40%', '100%','40%','20%'],
         }}
         transition={{
           repeat: Infinity,
           repeatType: 'reverse',
           duration: 1,
-          delay: i * 0.2,
+          delay:i*0.3
         }}
       />
     ))}
@@ -42,7 +42,7 @@ export default function YouTubeAudioPlayer({ videoId, thumbnailUrl }: YouTubePla
   useEffect(() => {
     const interval = setInterval(() => {
       if (isPlaying && playerRef.current?.internalPlayer) {
-        playerRef.current.internalPlayer.getCurrentTime().then((time: number) => {
+        playerRef.current.internalPlayer.getCurrentTime().then((time: number) => {          
           setCurrentTime(time)
         })
       }
@@ -51,24 +51,22 @@ export default function YouTubeAudioPlayer({ videoId, thumbnailUrl }: YouTubePla
     return () => clearInterval(interval)
   }, [isPlaying])
 
-  const togglePlayPause = useCallback(() => {
-    if (isPlaying) {
-      playerRef.current?.internalPlayer.pauseVideo()
-    } else {
-      playerRef.current?.internalPlayer.playVideo()
-    }
-    setIsPlaying(!isPlaying)
+  const togglePlayPause =useCallback (() => {
+    console.log("togglePlayPause",isPlaying)
+    socket.emit("realTime", {seekTime:currentTime, isPlaying:!isPlaying})
   }, [isPlaying])
 
   const seekForward = useCallback(() => {
     if (playerRef.current?.internalPlayer) {
       playerRef.current.internalPlayer.seekTo(currentTime + 5, true)
+      socket.emit("realTime", {seekTime:currentTime + 5,isPlaying:isPlaying})
     }
   }, [currentTime])
-
+  
   const seekBackward = useCallback(() => {
     if (playerRef.current?.internalPlayer) {
       playerRef.current.internalPlayer.seekTo(currentTime - 5, true)
+      socket.emit("realTime", {seekTime:currentTime - 5,isPlaying:isPlaying})
     }
   }, [currentTime])
 
@@ -77,6 +75,7 @@ export default function YouTubeAudioPlayer({ videoId, thumbnailUrl }: YouTubePla
   }
 
   const onStateChange = (event: { target: any, data: number }) => {
+    console.log("state chnage",event.data)
     if (event.data === YouTube.PlayerState.PLAYING) {
       setIsPlaying(true)
     } else if (event.data === YouTube.PlayerState.PAUSED) {
@@ -125,7 +124,20 @@ export default function YouTubeAudioPlayer({ videoId, thumbnailUrl }: YouTubePla
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [isPlaying]);
-
+  useEffect(()=>{
+    socket.on("realTime", (data) => {
+      if (playerRef.current?.internalPlayer) {
+        playerRef.current.internalPlayer.seekTo(data.seekTime, true)
+      }
+      console.log("useEffect",data.isPlaying)
+      setIsPlaying(data.isPlaying)   
+      if (!data.isPlaying) {
+        playerRef.current?.internalPlayer.pauseVideo()
+      } else {
+        playerRef.current?.internalPlayer.playVideo()
+      }
+    });
+  },[])
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
@@ -198,12 +210,12 @@ export default function YouTubeAudioPlayer({ videoId, thumbnailUrl }: YouTubePla
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
-                <Play className="w-16 h-16 text-primary" />
+                <Play className="w-16 h-16 text-primary"  onClick={togglePlayPause}   />
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+       </div>
       <div className="p-6">
         <Slider.Root
           className="relative flex items-center select-none touch-none w-full h-5 group"
@@ -213,7 +225,8 @@ export default function YouTubeAudioPlayer({ videoId, thumbnailUrl }: YouTubePla
           aria-label="Time"
           onValueChange={(value) => {
             if (playerRef.current?.internalPlayer) {
-              playerRef.current.internalPlayer.seekTo(value[0], true)
+              socket.emit("realTime", {seekTime:value[0],isPlaying:isPlaying})
+              console.log(value[0])
             }
           }}
         >
@@ -289,9 +302,8 @@ export default function YouTubeAudioPlayer({ videoId, thumbnailUrl }: YouTubePla
             height: '0',
             width: '0',
             playerVars: {
-              autoplay: 0,
-              controls: 0,
-              disablekb: 1,
+              autoplay: 1,
+              
             },
           }}
           onReady={onReady}

@@ -1,6 +1,7 @@
 import { Socket } from "socket.io";
 import redisClient from "../../app/lib/redis";
-import { io } from "../miscellaneous/serverConfig";
+import { io } from "../../server";
+
 import { rooms } from "../miscellaneous/maps";
 export async function deleteStream(socket:Socket, data:any) {
     const username = socket.data?.session?.user?.username || "";

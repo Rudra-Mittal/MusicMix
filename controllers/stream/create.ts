@@ -1,5 +1,6 @@
 import redisClient from "../../app/lib/redis";
-import {io} from "../miscellaneous/serverConfig";
+import { io } from "../../server";
+
 import { rooms } from "../miscellaneous/maps";
 // @ts-ignore
 import youtubesearchapi from "youtube-search-api"

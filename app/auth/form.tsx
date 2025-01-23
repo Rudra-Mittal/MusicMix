@@ -1,182 +1,258 @@
 "use client"
 
-import { useEffect, useState } from 'react'
-import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from "react"
+import { signIn } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import { motion, AnimatePresence } from "framer-motion"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function AuthForm() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [username, setUsername] = useState('')
-  const [name,setName]= useState('');
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [username, setUsername] = useState("")
+  const [name, setName] = useState("")
   const [isSignUp, setIsSignUp] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isGoogleUsername, setIsGoogleUsername] = useState(false)
-  const [callbackUrl, setCallbackUrl] = useState('/');
+  const [callbackUrl, setCallbackUrl] = useState("/")
+
   useEffect(() => {
-    const url = new URLSearchParams(window.location.search).get('callbackUrl') || '/';
-    setCallbackUrl(url);
-  }, []);
-  
+    const url = new URLSearchParams(window.location.search).get("callbackUrl") || "/"
+    setCallbackUrl(url)
+  }, [])
+
   const router = useRouter()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     if (isSignUp) {
       // Handle sign up
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, username,name }),
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, username, name }),
       })
 
       if (res.ok) {
         console.log("signed up")
         // If sign up is successful, log the user in
-        signIn('credentials', { email, password, redirect: false })
-          .then((result) => {
-            if (result?.error) {
-              setError(result.error)
-            } else {
-              router.push(callbackUrl) // Redirect to dashboard after successful sign up and sign in
-            }
-          })
-      } else {
-        const data = await res.json()
-        setError(data.message || 'Something went wrong')
-      }
-    } else {
-      // Handle sign in
-      signIn('credentials', { email, password, redirect: false })
-        .then((result) => {
-          console.log(result)
+        signIn("credentials", { email, password, redirect: false }).then((result) => {
           if (result?.error) {
             setError(result.error)
           } else {
-            router.push(callbackUrl) // Redirect to dashboard after successful sign in
+            router.push(callbackUrl) // Redirect to dashboard after successful sign up and sign in
           }
         })
+      } else {
+        const data = await res.json()
+        setError(data.message || "Something went wrong")
+      }
+    } else {
+      // Handle sign in
+      signIn("credentials", { email, password, redirect: false }).then((result) => {
+        console.log(result)
+        if (result?.error) {
+          setError(result.error)
+        } else {
+          router.push(callbackUrl) 
+        }
+      })
     }
   }
 
   const handleGoogleSignIn = (e: React.FormEvent) => {
     e.preventDefault()
-    if (isSignUp&&username.trim() === '') {
-      setError('Please enter a username for Google sign-in')
+    if (isSignUp && username.trim() === "") {
+      setError("Please enter a username for Google sign-in")
       return
     }
-    if(isSignUp) document.cookie = `username=${username}; path=/;`;
-    console.log(callbackUrl)
-    signIn('google', { callbackUrl: callbackUrl });
+    if (isSignUp) {
+      document.cookie = `username=${username}; path=/;`
+    }
+    // console.log(callbackUrl)
+    signIn("google", { callbackUrl: callbackUrl })
   }
 
-  if (isGoogleUsername&& isSignUp) {
+  const formVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  }
+
+  const fieldVariants = {
+    hidden: { opacity: 0, height: 0 },
+    visible: { opacity: 1, height: "auto", transition: { duration: 0.3 } },
+  }
+
+  const buttonVariants = {
+    hover: { scale: 1.05, transition: { duration: 0.2 } },
+    tap: { scale: 0.95, transition: { duration: 0.2 } },
+  }
+
+  if (isGoogleUsername && isSignUp) {
     return (
-      <form onSubmit={handleGoogleSignIn} className="mt-4">
-        <div className="mt-4">
-          <label className="block" htmlFor="google-username">Choose a username</label>
-          <input
-            type="text"
-            placeholder="Username"
-            id="google-username"
-            className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-        </div>
-        {error && <div className="text-red-500 mt-2">{error}</div>}
-        <div className="mt-4">
-          <button
-            type="submit"
-            className="w-full px-4 py-2 border flex justify-center items-center gap-2 border-slate-200 rounded-lg text-slate-700 hover:border-slate-400 hover:text-slate-900 hover:shadow transition duration-150"
-          >
-            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google logo" className="w-6 h-6" />
-            <span>{(isSignUp)?"SignUp":"Login"} with Google</span>
-          </button>
-        </div>
-      </form>
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-center">Choose a Username</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <motion.form onSubmit={handleGoogleSignIn} initial="hidden" animate="visible" variants={formVariants}>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="google-username">Username</Label>
+                <Input
+                  id="google-username"
+                  type="text"
+                  placeholder="Username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            {error && (
+              <motion.p
+                className="text-red-500 mt-2 text-sm"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                {error}
+              </motion.p>
+            )}
+            <div className="mt-6">
+              <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+                <Button type="submit" className="w-full">
+                  <img
+                    src="https://www.svgrepo.com/show/475656/google-color.svg"
+                    alt="Google logo"
+                    className="w-5 h-5 mr-2"
+                  />
+                  Sign Up with Google
+                </Button>
+              </motion.div>
+            </div>
+          </motion.form>
+        </CardContent>
+      </Card>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4">
-      {isSignUp && (
-        <div className="mt-4">
-          <label className="block" htmlFor="username">Username</label>
-          <input
-            type="text"
-            placeholder="Username"
-            id="username"
-            className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-          <label className="block" htmlFor="username">Name</label>
-          <input
-            type="text"
-            placeholder="name"
-            id="name"
-            className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-        </div>
-        
-      )}
-      <div className="mt-4">
-        <label className="block" htmlFor="email">Email</label>
-        <input
-          type="email"
-          placeholder="Email"
-          id="email"
-          className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </div>
-      <div className="mt-4">
-        <label className="block" htmlFor="password">Password</label>
-        <input
-          type="password"
-          placeholder="Password"
-          id="password"
-          className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </div>
-      {error && <div className="text-red-500 mt-2">{error}</div>}
-      <div className="flex items-center justify-between mt-4">
-        <button
-          className="px-6 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-900"
-          type="submit"
-        >
-          {isSignUp ? 'Sign Up' : 'Login'}
-        </button>
-        <button
-          type="button"
-          className="text-sm text-blue-600 hover:underline"
-          onClick={() => setIsSignUp(!isSignUp)}
-        >
-          {isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
-        </button>
-      </div>
-      <div className="mt-4">
-        <button
-          type="button"
-          className="w-full px-4 py-2 border flex justify-center items-center gap-2 border-slate-200 rounded-lg text-slate-700 hover:border-slate-400 hover:text-slate-900 hover:shadow transition duration-150"
-          onClick={(isSignUp)?() => setIsGoogleUsername(true):handleGoogleSignIn}
-        >
-          <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google logo" className="w-6 h-6" />
-          <span>Continue with Google</span>
-        </button>
-      </div>
-    </form>
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle className="text-2xl font-bold text-center">
+          {isSignUp ? "Create an Account" : "Welcome Back"}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <motion.form onSubmit={handleSubmit} initial="hidden" animate="visible" variants={formVariants}>
+          <AnimatePresence>
+            {isSignUp && (
+              <motion.div key="signup-fields" initial="hidden" animate="visible" exit="hidden" variants={fieldVariants}>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Username</Label>
+                    <Input
+                      id="username"
+                      type="text"
+                      placeholder="Username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Name</Label>
+                    <Input
+                      id="name"
+                      type="text"
+                      placeholder="Name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <div className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          {error && (
+            <motion.p
+              className="text-red-500 mt-2 text-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              {error}
+            </motion.p>
+          )}
+          <div className="mt-6 space-y-4">
+            <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+              <Button type="submit" className="w-full">
+                {isSignUp ? "Sign Up" : "Login"}
+              </Button>
+            </motion.div>
+            <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={isSignUp ? () => setIsGoogleUsername(true) : handleGoogleSignIn}
+              >
+                <img
+                  src="https://www.svgrepo.com/show/475656/google-color.svg"
+                  alt="Google logo"
+                  className="w-5 h-5 mr-2"
+                />
+                Continue with Google
+              </Button>
+            </motion.div>
+          </div>
+        </motion.form>
+      </CardContent>
+      <CardFooter>
+        <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants} className="w-full">
+          <Button
+            variant="link"
+            className="w-full"
+            onClick={() => {
+              setIsSignUp(!isSignUp)
+              setIsGoogleUsername(false)
+            }}
+          >
+            {isSignUp ? "Already have an account? Sign in" : "Need an account? Sign up"}
+          </Button>
+        </motion.div>
+      </CardFooter>
+    </Card>
   )
 }
 

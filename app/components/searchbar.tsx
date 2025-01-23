@@ -103,6 +103,9 @@ export default function SearchBar({username}: {username: string}) {
 
   const handleSearchIconClick = () => {
     setIsExpanded(true);
+    if(results.length){
+      setIsOpen(true);
+    }
     inputRef.current?.focus();
   };
 
@@ -158,10 +161,10 @@ export default function SearchBar({username}: {username: string}) {
             className={`rounded-full transition-all duration-300 ease-in-out flex items-center ${isExpanded ? 'w-0 p-0 overflow-hidden' : 'w-auto px-3'} dark:text-white dark:hover:bg-gray-900`}
             onClick={handleSearchIconClick}
           >
-            <Search className="h-4 w-4 mr-2" />
             <span className={`transition-opacity duration-300 ${isExpanded ? 'opacity-0' : 'opacity-100'}`}>
               Search
             </span>
+            <Search className="h-4 w-4 ml-2" />
           </Button>
         </form>
         {isOpen && results.length > 0 && (

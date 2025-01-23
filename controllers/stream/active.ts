@@ -1,7 +1,7 @@
 import redisClient from "../../app/lib/redis";
 import { Socket } from "socket.io";
 import { rooms } from "../miscellaneous/maps";
-import { io } from "../miscellaneous/serverConfig";
+import { io } from "../../server";
 
 export async function active(socket:Socket, data:any) {
     const username = socket.data?.session?.user?.username || "";

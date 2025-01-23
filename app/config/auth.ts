@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { NextAuthOptions, Session } from 'next-auth';
+import { NextAuthOptions, Session, User } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import jwt from "jsonwebtoken";
 import Credentials from 'next-auth/providers/credentials';
@@ -39,7 +39,7 @@ export const options: NextAuthOptions = {
             },
             async authorize(credentials) {
                 if(!credentials){
-                    return null;
+                    throw new Error('Provide valid credentials') ;
                 }
                 const { email, password } = credentials;
                 const user = await prisma.user.findFirst({
@@ -48,9 +48,12 @@ export const options: NextAuthOptions = {
                     }
                 });
                 if(!user){
-                    return null;
+                    throw new Error('No user found with the provided email.');
                 }
-                const valid = await bcrypt.compare(password,user?.password!);
+                if(!user.password){
+                    throw new Error('Login via google with this email')
+                }
+                const valid = await bcrypt.compare(password,user?.password);
                 if(valid){
                     return {
                         id: user.id,
@@ -58,8 +61,8 @@ export const options: NextAuthOptions = {
                         email: user.email,
                         username: user.username,
                     };
-                }
-                return null;
+                }else 
+                throw new Error('Invalid Email or Passowrd ') 
             }
         }),
         
@@ -67,11 +70,11 @@ export const options: NextAuthOptions = {
     secret: process.env.NEXTAUTH_SECRET!,
     callbacks: {
         async session({ session, token }) {
-            console.log("token in auth",token)
+            // console.log("token in auth",token)
             if(token?.user){
                 session.user = token.user;
             }
-            console.log("session in auth",session)
+            // console.log("session in auth",session)
             return session;
         },
         async signIn({user,account}) {
