@@ -5,7 +5,6 @@ import { Slider } from "@/components/ui/slider"
 import { Music, Play, Vote, Users } from "lucide-react"
 import Link from "next/link"
 import AuthOptions from "./components/authoptions";
-import { ModeToggle } from "./components/switchTheme"
 export default function Home() {
   return (
     <div>
@@ -38,7 +37,7 @@ export default function Home() {
                 </h1>
                 <p className="mx-auto max-w-[700px] text-gray-400 md:text-xl">
                   Stream your music and let your audience decide what plays next. MusicMix brings creators and listeners
-                  together in a unique, interactive experience that's pure elegance.
+                  together in a unique, interactive experience that&apos;s pure elegance.
                 </p>
               </div>
               <div className="space-x-4 pt-auto">

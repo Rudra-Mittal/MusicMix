@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Label } from "@/components/ui/label"
+import Image from "next/image"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -125,12 +126,14 @@ export default function AuthForm() {
             )}
             <div className="mt-6">
               <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
-                <Button type="submit" className="w-full">
-                  <img
+                  <Image
                     src="https://www.svgrepo.com/show/475656/google-color.svg"
                     alt="Google logo"
+                    width={20}
+                    height={20}
                     className="w-5 h-5 mr-2"
                   />
+                <Button type="submit" className="w-full">
                   Sign Up with Google
                 </Button>
               </motion.div>
@@ -227,7 +230,7 @@ export default function AuthForm() {
                 className="w-full"
                 onClick={isSignUp ? () => setIsGoogleUsername(true) : handleGoogleSignIn}
               >
-                <img
+                <Image
                   src="https://www.svgrepo.com/show/475656/google-color.svg"
                   alt="Google logo"
                   className="w-5 h-5 mr-2"

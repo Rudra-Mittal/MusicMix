@@ -1,10 +1,8 @@
 import { PrismaClient } from '@prisma/client';
-import { NextAuthOptions, Session, User } from 'next-auth';
+import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
-import jwt from "jsonwebtoken";
 import Credentials from 'next-auth/providers/credentials';
 import bcrypt from "bcryptjs";
-import {parse} from 'cookie'
 const prisma = new PrismaClient();
 declare module "next-auth" {
     interface SignInCallbackParams {

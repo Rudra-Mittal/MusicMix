@@ -1,8 +1,7 @@
 import NextAuth from "next-auth/next";
 import { NextApiRequest, NextApiResponse } from "next";
 import { options } from "@/app/config/auth";
-import jwt from 'jsonwebtoken'
-import {  TokenSet, User } from "next-auth";
+import { User } from "next-auth";
 import prisma from "@/app/lib/db";
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -55,7 +54,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             }
             token.user={email:res.email,name:res.name,username:res.username};
           }
-          // console.log("user in jwt",user)
           return token
         }
       },
