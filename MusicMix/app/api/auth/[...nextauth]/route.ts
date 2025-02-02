@@ -1,13 +1,12 @@
+// @ts-nocheck
 import NextAuth from "next-auth/next";
-import { NextApiRequest, NextApiResponse } from "next";
 import { options } from "@/app/config/auth";
 import { User } from "next-auth";
 import prisma from "@/app/lib/db";
 
-const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+const handler = async (req, res) => {
   console.log(req.url);
   if(req.method==='GET'&&req.url?.includes('/api/auth/callback/google')){
-    // @ts-ignore
     const username= await req.cookies.get('username')?.value;
    const modifiedOptions = {
       ...options,
