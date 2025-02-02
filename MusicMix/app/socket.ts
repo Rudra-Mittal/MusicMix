@@ -2,7 +2,7 @@
 import { io, Socket } from "socket.io-client";
 let socket: Socket | null = null;
 async function getSessionToken(): Promise<string> {
-  const response = await fetch(`http://localhost:3001/api/session-token`, {
+  const response = await fetch(`${process.env.BACKEND_URL}/api/session-token`, {
     method: "GET",
     credentials: "include",
   });
