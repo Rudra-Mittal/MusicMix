@@ -1,8 +1,11 @@
 "use client";
 import { io, Socket } from "socket.io-client";
+import dotenv from "dotenv";
+dotenv.config()
 let socket: Socket | null = null;
 async function getSessionToken(): Promise<string> {
-  const response = await fetch(`${process.env.BACKEND_URL}/api/session-token`, {
+  console.log()
+  const response = await fetch(process.env.NEXT_PUBLIC_NEXTAUTH_URL+`/api/session-token`, {
     method: "GET",
     credentials: "include",
   });
@@ -19,7 +22,7 @@ export async function initializeSocket(): Promise<Socket> {
   }
   const sessionToken = await getSessionToken();
   // console.log("sessionToken", sessionToken);
-  socket = io("http://localhost:3000", {
+  socket = io(process.env.NEXT_PUBLIC_BACKEND_URL, {
     withCredentials: true,
     extraHeaders: {
       "next-auth.session-token": sessionToken,

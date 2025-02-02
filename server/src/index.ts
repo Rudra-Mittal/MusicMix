@@ -25,7 +25,6 @@ export const io = new SocketIOServer(httpServer, {
 
 const port = process.env.PORT 
 const hostname = 'localhost';
-
 app.use(express.static(path.join(__dirname, 'public')));
 
 io.use(authentication);
