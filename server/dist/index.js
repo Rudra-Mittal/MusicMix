@@ -16,18 +16,20 @@ const disconnect_1 = require("./controllers/general/disconnect");
 const auth_1 = require("./middlewares/auth");
 const create_1 = require("./controllers/stream/create");
 const delete_1 = require("./controllers/stream/delete");
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 const app = (0, express_1.default)();
 const httpServer = (0, http_1.createServer)(app);
 exports.io = new socket_io_1.Server(httpServer, {
     cors: {
-        origin: ["http://localhost:3001", "https://4j55gz30-3001.inc1.devtunnels.ms", "http://172.16.230.69:3001"],
+        origin: [`http://${process.env.HOST}:3001`],
         methods: ["GET", "POST"],
         allowedHeaders: ["Authorization", "next-auth.session-token", "__Secure-next-auth.session-token"],
         credentials: true,
     },
 });
-const port = process.env.PORT || 3000;
-const hostname = process.env.HOSTNAME || 'localhost';
+const port = process.env.PORT;
+const hostname = 'localhost';
 app.use(express_1.default.static(path_1.default.join(__dirname, 'public')));
 exports.io.use(auth_1.authentication);
 exports.io.on("connection", (socket) => {

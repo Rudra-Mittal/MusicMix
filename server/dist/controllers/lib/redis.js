@@ -1,8 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const redis_1 = require("redis");
-const redisUrl = "redis://default:4gdHNvdsTXMVgtYquG01Ij9NG106gTVP@redis-17531.c89.us-east-1-3.ec2.redns.redis-cloud.com:17531";
-const redisClient = (0, redis_1.createClient)({ url: redisUrl });
-redisClient.on("error", (err) => console.error("Redis Client Error", err));
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
+const redisClient = (0, redis_1.createClient)({ url: process.env.REDIS_URL });
+redisClient.on("error", (err) => console.error("Redis Client Error", process.env.REDIS_URL, err));
 redisClient.connect();
 exports.default = redisClient;
