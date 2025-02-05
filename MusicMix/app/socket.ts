@@ -21,7 +21,7 @@ export async function initializeSocket(): Promise<Socket> {
   }
   const sessionToken = await getSessionToken();
   console.log("sessionToken", sessionToken);
-  socket = io(process.env.NEXT_PUBLIC_BACKEND_URL, {
+  socket = io("https://musicbackend.devrudra.site", {
     withCredentials: true,
     extraHeaders: {
       "Authorization": sessionToken,
