@@ -1,16 +1,15 @@
 import { Socket } from "socket.io";
-const hostname = "localhost";
+const hostname = "musicmix.devrudra.site";
 const port = 3001;
 export async function authentication(socket: Socket, next: (err?: any) => void) {
-  const cookies =socket.handshake.headers.cookie
-  const sessionToken = cookies?.search("next-auth.session-token=") !== -1 ? cookies?.split("next-auth.session-token=")[1].split(";")[0] : null;
-  // const sessionToken = cookies["__secure-next-auth.session-token"];
+  const cookies =socket.handshake.headers;
+  console.log(socket.handshake.headers);
+   const sessionToken = cookies["authorization"];
   console.log("sessionToken", sessionToken);
       try{
-        const response= await fetch(`http://${hostname}:${port}/api/session`,{
+        const response= await fetch(`https://${hostname}/api/session`,{
           headers:{
-            // cookie: `__Secure-next-auth.session-token=${sessionToken}`
-            cookie: `next-auth.session-token=${sessionToken}` 
+            cookie: `__Secure-next-auth.session-token=${sessionToken}` 
           }
         })
         const session = await response.json();

@@ -16,15 +16,34 @@ exports.createStream = createStream;
 const redis_1 = __importDefault(require("../lib/redis"));
 const index_1 = require("../../index");
 const maps_1 = require("../miscellaneous/maps");
-// @ts-ignore
-const youtube_search_api_1 = __importDefault(require("youtube-search-api"));
 const crypto_1 = require("crypto");
+function getVideoDetails(videoId, apiKey) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const endpoint = `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=${videoId}&key=${apiKey}`;
+        try {
+            const response = yield fetch(endpoint);
+            if (!response.ok) {
+                throw new Error(`YouTube API responded with status ${response.status}`);
+            }
+            const data = yield response.json();
+            if (!data.items || data.items.length === 0) {
+                throw new Error('No video found for the provided video ID.');
+            }
+            // Assuming the video ID is unique and returns a single video item.
+            return data.items[0];
+        }
+        catch (error) {
+            console.error('Error fetching video details:', error);
+            throw error;
+        }
+    });
+}
 function createStream(socket, data) {
     return __awaiter(this, void 0, void 0, function* () {
         var _a, _b, _c;
         // Strictly check the data
-        console.log("create", data);
-        const videoDetails = yield youtube_search_api_1.default.GetVideoDetails(data.videoId);
+        const videoDetails = yield getVideoDetails(data.videoId, process.env.YOUTUBE_API_KEY || "");
+        console.log("create", videoDetails.thumbnails);
         const username = ((_c = (_b = (_a = socket.data) === null || _a === void 0 ? void 0 : _a.session) === null || _b === void 0 ? void 0 : _b.user) === null || _c === void 0 ? void 0 : _c.username) || "";
         const streamId = `stream:${data.userName}:${data.videoId}`;
         // console.log(videoDetails);

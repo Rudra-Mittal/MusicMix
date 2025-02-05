@@ -4,15 +4,14 @@ import dotenv from "dotenv";
 dotenv.config()
 let socket: Socket | null = null;
 async function getSessionToken(): Promise<string> {
-  console.log()
   const response = await fetch(process.env.NEXT_PUBLIC_NEXTAUTH_URL+`/api/session-token`, {
     method: "GET",
     credentials: "include",
   });
-  console.log(response)
-  const data = await response.json();
+  const responseBody = await response.text();
+  console.log(responseBody);
+  const data = JSON.parse(responseBody);
   console.log(data);
-  // send data.sessiontoken when in http
   return data;
 }
 
@@ -25,8 +24,7 @@ export async function initializeSocket(): Promise<Socket> {
   socket = io(process.env.NEXT_PUBLIC_BACKEND_URL, {
     withCredentials: true,
     extraHeaders: {
-      // "next-auth.session-token": sessionToken,
-      "__Secure-next-auth.session-token": sessionToken,
+      "Authorization": sessionToken,
     },
   });
   socket.on("connect", () => {
