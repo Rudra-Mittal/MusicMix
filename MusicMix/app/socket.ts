@@ -13,7 +13,7 @@ async function getSessionToken(): Promise<string> {
   const data = await response.json();
   console.log(data);
   // send data.sessiontoken when in http
-  return data.sessiontoken;
+  return data;
 }
 
 export async function initializeSocket(): Promise<Socket> {
@@ -21,12 +21,12 @@ export async function initializeSocket(): Promise<Socket> {
     return socket;
   }
   const sessionToken = await getSessionToken();
-  // console.log("sessionToken", sessionToken);
+  console.log("sessionToken", sessionToken);
   socket = io(process.env.NEXT_PUBLIC_BACKEND_URL, {
     withCredentials: true,
     extraHeaders: {
-      "next-auth.session-token": sessionToken,
-      // "__Secure-next-auth.session-token": sessionToken,
+      // "next-auth.session-token": sessionToken,
+      "__Secure-next-auth.session-token": sessionToken,
     },
   });
   socket.on("connect", () => {
